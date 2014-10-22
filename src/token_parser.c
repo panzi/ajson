@@ -1,96 +1,14 @@
 #include "ajson.h"
 
 #include <inttypes.h>
-#include <errno.h>
-#include <string.h>
 #include <ctype.h>
 #include <math.h>
 
-#define AJSON_STACK_SIZE 64
 #define AJSON_SET_ERROR(PARSER, ERR) \
     (PARSER)->value.error.error = (ERR); \
     (PARSER)->value.error.filename = __FILE__; \
     (PARSER)->value.error.function = __func__; \
     (PARSER)->value.error.lineno   = __LINE__;
-
-const char* ajson_error_str(enum ajson_error error) {
-    switch (error) {
-    case AJSON_ERROR_EMPTY_SATCK:
-        return "empty stack";
-
-    case AJSON_ERROR_JUMP:
-        return "illegal jump";
-
-    case AJSON_ERROR_MEMORY:
-        return "out of memory";
-
-    case AJSON_ERROR_PARSER:
-        return "parser error";
-
-    case AJSON_ERROR_PARSER_UNEXPECTED:
-        return "unexpected character";
-
-    case AJSON_ERROR_PARSER_EXPECTED_ARRAY_END:
-        return "expected ]";
-
-    case AJSON_ERROR_PARSER_EXPECTED_OBJECT_END:
-        return "expected }";
-
-    case AJSON_ERROR_PARSER_UNICODE:
-        return "illegal unicode codepoint";
-
-    case AJSON_ERROR_PARSER_UNEXPECTED_EOF:
-        return "unexpected end of file";
-
-    case AJSON_ERROR_NONE:
-        return "no error";
-
-    default:
-        return "unknown error";
-    }
-}
-
-int ajson_init(ajson_parser *parser, int flags) {
-    if (flags & ~AJSON_FLAG_INTEGER) {
-        errno = EINVAL;
-        return -1;
-    }
-
-    memset(parser, 0, sizeof(ajson_parser));
-    parser->lineno = 1;
-    parser->flags  = flags;
-
-    parser->stack = calloc(AJSON_STACK_SIZE, sizeof(uintptr_t));
-    if (!parser->stack) {
-        return -1;
-    }
-    parser->stack_size = AJSON_STACK_SIZE;
-
-    return 0;
-}
-
-void ajson_destroy(ajson_parser *parser) {
-    free(parser->buffer);
-    parser->buffer      = NULL;
-    parser->buffer_size = 0;
-    parser->buffer_used = 0;
-
-    free(parser->stack);
-    parser->stack         = NULL;
-    parser->stack_size    = 0;
-    parser->stack_current = 0;
-}
-
-int ajson_feed(ajson_parser *parser, const void *buffer, size_t size) {
-    if (parser->input_current < parser->input_size) {
-        errno = ENOBUFS;
-        return -1;
-    }
-    parser->input         = buffer;
-    parser->input_size    = size;
-    parser->input_current = 0;
-    return 0;
-}
 
 static inline int ajson_push(ajson_parser *parser, uintptr_t state) {
     if (parser->stack_current + 1 == parser->buffer_size) {

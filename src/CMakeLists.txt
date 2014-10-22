@@ -2,7 +2,7 @@ include(GenerateExportHeader)
 
 configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
-set(AJSON_SRCS token_parser.c callback_parser.c ajson.h config.h.in)
+set(AJSON_SRCS token_parser.c callback_parser.c ajson.c ajson.h config.h.in)
 
 add_compiler_export_flags()
 add_library(${AJSON_LIB_NAME} ${AJSON_SRCS})

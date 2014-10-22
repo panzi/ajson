@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.8)
 project(ajson)
 
 option(BUILD_EXAMPLES "Build examples" OFF)
-option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+option(BUILD_SHARED_LIBS "Build Shared Libraries" ON)
 #option(BUILD_DOCS "Build doxygen documentation" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 

@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+#define AJSON_STACK_SIZE 64
+
 #define AJSON_FLAG_NONE              0
 #define AJSON_FLAG_INTEGER           1 // parse numbers with no "." as int64_t
 #define AJSON_FLAG_NUMBER_COMPONENTS 2 // don't combine numbers into doubles but return their integer, decimal, and exponent components
@@ -54,33 +56,32 @@ struct ajson_parser_s {
     uintptr_t   *stack;
     size_t       stack_size;
     size_t       stack_current;
-    char  *buffer;
-    size_t buffer_size;
-    size_t buffer_used;
-    enum ajson_token token;
+    char        *buffer;
+    size_t       buffer_size;
+    size_t       buffer_used;
     union {
-        bool             boolean;
-        double           number;
-        int64_t          integer;
+        bool          boolean;
+        double        number;
+        int64_t       integer;
         struct {
-            bool         positive;
-            bool         exponent_positive;
-            bool         isinteger;
-            uint64_t     integer;
-            uint64_t     decimal;
-            uint64_t     decimal_places;
-            uint64_t     exponent;
+            bool      positive;
+            bool      exponent_positive;
+            bool      isinteger;
+            uint64_t  integer;
+            uint64_t  decimal;
+            uint64_t  decimal_places;
+            uint64_t  exponent;
         } components;
         struct {
-            uint16_t unit1;
-            uint16_t unit2;
+            uint16_t  unit1;
+            uint16_t  unit2;
         } surrogate_pair;
-        const char      *string;
+        const char   *string;
         struct {
             enum ajson_error error;
-            const char *filename;
-            const char *function;
-            size_t      lineno;
+            const char      *filename;
+            const char      *function;
+            size_t           lineno;
         } error;
     } value;
 };
@@ -91,6 +92,29 @@ int              ajson_init      (ajson_parser *parser, int flags);
 void             ajson_destroy   (ajson_parser *parser);
 int              ajson_feed      (ajson_parser *parser, const void *buffer, size_t size);
 enum ajson_token ajson_next_token(ajson_parser *parser);
+
+ajson_parser *ajson_alloc(int flags);
+void          ajson_free (ajson_parser *parser);
+
+size_t ajson_get_lineno  (const ajson_parser *parser);
+size_t ajson_get_columnno(const ajson_parser *parser);
+
+bool        ajson_get_boolean(const ajson_parser *parser);
+double      ajson_get_number (const ajson_parser *parser);
+int64_t     ajson_get_integer(const ajson_parser *parser);
+const char* ajson_get_string (const ajson_parser *parser);
+
+bool     ajson_get_components_positive         (const ajson_parser *parser);
+bool     ajson_get_components_exponent_positive(const ajson_parser *parser);
+uint64_t ajson_get_components_integer          (const ajson_parser *parser);
+uint64_t ajson_get_components_decimal          (const ajson_parser *parser);
+uint64_t ajson_get_components_decimal_places   (const ajson_parser *parser);
+uint64_t ajson_get_components_exponent         (const ajson_parser *parser);
+
+enum ajson_error ajson_get_error         (const ajson_parser *parser);
+const char*      ajson_get_error_filename(const ajson_parser *parser);
+const char*      ajson_get_error_function(const ajson_parser *parser);
+size_t           ajson_get_error_lineno  (const ajson_parser *parser);
 
 const char* ajson_error_str(enum ajson_error error);
 
