@@ -37,19 +37,19 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 	endif()
 endif()
 
-#if(NOT WIN32)
-#	find_library(M_LIBRARY
-#		NAMES m
-#		PATHS /usr/lib /usr/local/lib)
-#	if(M_LIBRARY)
-#		set(AJSON_PRIVATE_LIBS -l${M_LIBRARY})
-#	else()
-#		message(STATUS "math library 'libm' not found")
-#	endif()
-#else()
-#	# not needed on windows
-#	set(M_LIBRARY "")
-#endif()
+if(NOT WIN32)
+	find_library(M_LIBRARY
+		NAMES m
+		PATHS /usr/lib /usr/local/lib)
+	if(M_LIBRARY)
+		set(AJSON_PRIVATE_LIBS -l${M_LIBRARY})
+	else()
+		message(STATUS "math library 'libm' not found")
+	endif()
+else()
+	# not needed on windows
+	set(M_LIBRARY "")
+endif()
 
 # from libpng
 # Set a variable with CMake code which:

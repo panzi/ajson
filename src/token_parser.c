@@ -1,8 +1,10 @@
 #include "ajson.h"
 
+#include <inttypes.h>
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 
 #define AJSON_STACK_SIZE 64
 #define AJSON_SET_ERROR(PARSER, ERR) \
@@ -268,7 +270,10 @@ enum ajson_named_states {
 
 #define STATE_WITH_DATA(NAME) \
     STATE(NAME) \
-    RQUIRE_DATA(STATE_REF(NAME))
+    if (AT_EOF()) { \
+        RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED_EOF) \
+    } \
+    else RQUIRE_DATA(STATE_REF(NAME))
 
 #define RETURN(TOK) { \
     parser->input_current = index; \
@@ -520,7 +525,118 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
         }
         else if (CURR_CH() == '-' || isdigit(CURR_CH())) {
             // parse number
-            // TODO
+            parser->value.components.positive          = true;
+            parser->value.components.exponent_positive = true;
+            parser->value.components.isinteger         = true;
+            parser->value.components.integer           = 0;
+            parser->value.components.decimal           = 0;
+            parser->value.components.decimal_places    = 0;
+            parser->value.components.exponent          = 0;
+
+            if (CURR_CH() == '-') {
+                parser->value.components.positive = false;
+                READ_NEXT();
+            }
+
+            if (CURR_CH() >= '1' && CURR_CH() <= '9') {
+                do {
+                    int digit = CURR_CH() - '0';
+                    if ((UINT64_MAX - digit) / 10 < parser->value.components.integer) {
+                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
+                    }
+                    parser->value.components.integer *= 10;
+                    parser->value.components.integer += digit;
+                    READ_NEXT_OR_EOF();
+                } while (!AT_EOF() && isdigit(CURR_CH()));
+            }
+            else if (CURR_CH() == '0') {
+                READ_NEXT_OR_EOF();
+            }
+
+            if (!AT_EOF() && CURR_CH() == '.') {
+                READ_NEXT();
+
+                parser->value.components.isinteger = false;
+                if (!isdigit(CURR_CH())) {
+                    RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED);
+                }
+
+                do {
+                    int digit = CURR_CH() - '0';
+                    if ((UINT64_MAX - digit) / 10 < parser->value.components.decimal ||
+                        parser->value.components.decimal_places == INT64_MAX) {
+                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
+                    }
+                    parser->value.components.decimal *= 10;
+                    parser->value.components.decimal += digit;
+                    parser->value.components.decimal_places += 1;
+                    READ_NEXT_OR_EOF();
+                } while (!AT_EOF() && isdigit(CURR_CH()));
+            }
+
+            if (!AT_EOF() && (CURR_CH() == 'e' || CURR_CH() == 'E')) {
+                READ_NEXT();
+
+                parser->value.components.isinteger = false;
+                if (CURR_CH() == '-') {
+                    parser->value.components.exponent_positive = false;
+                    READ_NEXT();
+                }
+                else if (CURR_CH() == '+') {
+                    READ_NEXT();
+                }
+
+                if (!isdigit(CURR_CH())) {
+                    RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED);
+                }
+
+                do {
+                    int digit = CURR_CH() - '0';
+                    if ((UINT64_MAX - digit) / 10 < parser->value.components.exponent) {
+                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
+                    }
+                    parser->value.components.exponent *= 10;
+                    parser->value.components.exponent += digit;
+                    READ_NEXT_OR_EOF();
+                } while (!AT_EOF() && isdigit(CURR_CH()));
+            }
+
+            if (!AT_EOF() && !ispunct(CURR_CH()) && !isspace(CURR_CH())) {
+                RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED);
+            }
+
+            if ((parser->flags & AJSON_FLAG_INTEGER) && parser->value.components.isinteger) {
+                parser->value.integer = parser->value.components.integer;
+                RETURN(AJSON_TOK_INTEGER);
+            }
+            else if ((parser->flags & AJSON_FLAG_NUMBER_COMPONENTS) == 0) {
+                double number = (double)parser->value.components.integer;
+
+                if (parser->value.components.decimal > 0) {
+                    number += parser->value.components.decimal * pow(10.0, -(double)parser->value.components.decimal_places);
+                }
+
+                if (parser->value.components.exponent > 0) {
+                    if (parser->value.components.exponent_positive) {
+                        number *= pow(10.0, (double)parser->value.components.exponent);
+                    }
+                    else {
+                        number *= pow(10.0, -(double)parser->value.components.exponent);
+                    }
+                }
+
+                if (!parser->value.components.positive) {
+                    number = -number;
+                }
+
+                if (isinf(number)) {
+                    RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
+                }
+
+                parser->value.number = number;
+            }
+
+            RETURN(AJSON_TOK_NUMBER);
         }
         else if (CURR_CH() == '[') {
             // parse array

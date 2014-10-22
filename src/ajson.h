@@ -13,7 +13,7 @@ extern "C" {
 
 #define AJSON_FLAG_NONE              0
 #define AJSON_FLAG_INTEGER           1 // parse numbers with no "." as int64_t
-#define AJSON_FLAG_NUMBER_COMPONENTS 2 // don't combine numbers into doubles but return their integer, decimal, decimal_places and exponent components
+#define AJSON_FLAG_NUMBER_COMPONENTS 2 // don't combine numbers into doubles but return their integer, decimal, and exponent components
 
 enum ajson_token {
     AJSON_TOK_NEED_DATA,
@@ -34,12 +34,13 @@ enum ajson_error {
     AJSON_ERROR_NONE,
     AJSON_ERROR_MEMORY,
     AJSON_ERROR_EMPTY_SATCK, // internal error
-    AJSON_ERROR_JUMP, // internal error
+    AJSON_ERROR_JUMP,        // internal error
     AJSON_ERROR_PARSER,
     AJSON_ERROR_PARSER_UNEXPECTED,
     AJSON_ERROR_PARSER_EXPECTED_ARRAY_END,
     AJSON_ERROR_PARSER_EXPECTED_OBJECT_END,
     AJSON_ERROR_PARSER_UNICODE,
+    AJSON_ERROR_PARSER_RANGE,
     AJSON_ERROR_PARSER_UNEXPECTED_EOF
 };
 
@@ -62,10 +63,13 @@ struct ajson_parser_s {
         double           number;
         int64_t          integer;
         struct {
-            int64_t      integer;
-            unsigned int decimal;
-            unsigned int decimal_places;
-            int          exponent;
+            bool         positive;
+            bool         exponent_positive;
+            bool         isinteger;
+            uint64_t     integer;
+            uint64_t     decimal;
+            uint64_t     decimal_places;
+            uint64_t     exponent;
         } components;
         struct {
             uint16_t unit1;
@@ -93,14 +97,15 @@ const char* ajson_error_str(enum ajson_error error);
 typedef int (*ajson_null_func)        (void *ctx);
 typedef int (*ajson_boolean_func)     (void *ctx, bool        value);
 typedef int (*ajson_number_func)      (void *ctx, double      value);
-typedef int (*ajson_integer_func)     (void *ctx, int64_t    value);
+typedef int (*ajson_components_func)  (void *ctx, bool positive, uint64_t integer, uint64_t decimal, uint64_t decimal_places, bool exponent_positive, uint64_t exponent);
+typedef int (*ajson_integer_func)     (void *ctx, int64_t     value);
 typedef int (*ajson_string_func)      (void *ctx, const char* value);
 typedef int (*ajson_begin_array_func) (void *ctx);
 typedef int (*ajson_end_array_func)   (void *ctx);
 typedef int (*ajson_begin_object_func)(void *ctx);
-typedef int (*ajson_object_key_func)  (void *ctx, const char* key);
 typedef int (*ajson_end_object_func)  (void *ctx);
-typedef int (*ajson_error_func)       (void *ctx, int errnum);
+typedef int (*ajson_end_func)         (void *ctx);
+typedef int (*ajson_error_func)       (void *ctx, enum ajson_error error);
 
 struct ajson_cb_parser_s {
     ajson_parser            parser;
@@ -108,21 +113,23 @@ struct ajson_cb_parser_s {
     ajson_null_func         null_func;
     ajson_boolean_func      boolean_func;
     ajson_number_func       number_func;
+    ajson_components_func   components_func;
     ajson_integer_func      integer_func;
     ajson_string_func       string_func;
     ajson_begin_array_func  begin_array_func;
     ajson_end_array_func    end_array_func;
     ajson_begin_object_func begin_object_func;
-    ajson_object_key_func   object_key_func;
     ajson_end_object_func   end_object_func;
+    ajson_end_func          end_func;
     ajson_error_func        error_func;
 };
 
 typedef struct ajson_cb_parser_s ajson_cb_parser;
 
-int ajson_cb_feed_fd  (ajson_cb_parser *parser, int fd);
-int ajson_cb_feed_file(ajson_cb_parser *parser, FILE* stream);
-int ajson_cb_feed_buf (ajson_cb_parser *parser, const void* buffer, size_t size);
+int ajson_cb_parse_fd  (ajson_cb_parser *parser, int fd);
+int ajson_cb_parse_file(ajson_cb_parser *parser, FILE* stream);
+int ajson_cb_parse_buf (ajson_cb_parser *parser, const void* buffer, size_t size);
+int ajson_cb_dispatch  (ajson_cb_parser *parser);
 
 #ifdef __cplusplus
 }

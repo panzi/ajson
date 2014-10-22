@@ -6,7 +6,7 @@
 int main() {
     ajson_parser parser;
 
-    if (ajson_init(&parser, 0) != 0) {
+    if (ajson_init(&parser, AJSON_FLAG_INTEGER) != 0) {
         perror("ajson_init");
         return 1;
     }
