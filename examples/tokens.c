@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "ajson.h"
 
@@ -10,10 +11,10 @@ int main() {
         return 1;
     }
 
-    char buf[BUFSIZ];
+    char buf[2];
 
     for (;;) {
-        size_t size = fread(buf, 1, BUFSIZ, stdin);
+        size_t size = fgets(buf, sizeof(buf), stdin) ? strlen(buf) : 0;
 
         if (ajson_feed(&parser, buf, size) != 0) {
             perror("ajson_feed");
@@ -21,8 +22,10 @@ int main() {
             return 1;
         }
 
-        enum ajson_token token;
-        while ((token = ajson_next_token(&parser)) != AJSON_TOK_EOF) {
+        bool has_tokens = true;
+        while (has_tokens) {
+            enum ajson_token token = ajson_next_token(&parser);
+
             switch (token) {
             case AJSON_TOK_NULL:
                 printf("TOK: null\n");
@@ -56,21 +59,24 @@ int main() {
                 printf("TOK: {\n");
                 break;
 
-            case AJSON_TOK_OBJECT_KEY:
-                printf("TOK: key: %s\n", parser.value.string);
-                break;
-
             case AJSON_TOK_END_OBJECT:
                 printf("TOK: }\n");
                 break;
 
+            case AJSON_TOK_END:
+                printf("TOK: END\n");
+                has_tokens = false;
+                break;
+
             case AJSON_TOK_ERROR:
                 printf("TOK: error\n");
-                fprintf(stderr, "%zu:%zu: ajson_parse: %s\n", parser.lineno, parser.columnno, ajson_error_str(parser.value.error));
+                fprintf(stderr, "<stdin>:%zu:%zu: ajson_parse: %s\n", parser.lineno, parser.columnno, ajson_error_str(parser.value.error.error));
+                fprintf(stderr, "%s:%zu: %s: error raised here\n", parser.value.error.filename, parser.value.error.lineno, parser.value.error.function);
                 ajson_destroy(&parser);
                 return 1;
 
-            case AJSON_TOK_EOF:
+            case AJSON_TOK_NEED_DATA:
+                has_tokens = false;
                 break;
             }
         }

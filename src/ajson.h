@@ -11,11 +11,12 @@
 extern "C" {
 #endif
 
-#define AJSON_FLAG_NONE    0
-#define AJSON_FLAG_INTEGER 1 // parse numbers with no "." as long int
+#define AJSON_FLAG_NONE              0
+#define AJSON_FLAG_INTEGER           1 // parse numbers with no "." as int64_t
+#define AJSON_FLAG_NUMBER_COMPONENTS 2 // don't combine numbers into doubles but return their integer, decimal, decimal_places and exponent components
 
 enum ajson_token {
-    AJSON_TOK_EOF,
+    AJSON_TOK_NEED_DATA,
     AJSON_TOK_NULL,
     AJSON_TOK_BOOLEAN,
     AJSON_TOK_NUMBER,
@@ -24,8 +25,8 @@ enum ajson_token {
     AJSON_TOK_BEGIN_ARRAY,
     AJSON_TOK_END_ARRAY,
     AJSON_TOK_BEGIN_OBJECT,
-    AJSON_TOK_OBJECT_KEY,
     AJSON_TOK_END_OBJECT,
+    AJSON_TOK_END,
     AJSON_TOK_ERROR
 };
 
@@ -33,6 +34,7 @@ enum ajson_error {
     AJSON_ERROR_NONE,
     AJSON_ERROR_MEMORY,
     AJSON_ERROR_EMPTY_SATCK, // internal error
+    AJSON_ERROR_JUMP, // internal error
     AJSON_ERROR_PARSER,
     AJSON_ERROR_PARSER_UNEXPECTED,
     AJSON_ERROR_PARSER_EXPECTED_ARRAY_END,
@@ -58,9 +60,24 @@ struct ajson_parser_s {
     union {
         bool             boolean;
         double           number;
-        long             integer;
+        int64_t          integer;
+        struct {
+            int64_t      integer;
+            unsigned int decimal;
+            unsigned int decimal_places;
+            int          exponent;
+        } components;
+        struct {
+            uint16_t unit1;
+            uint16_t unit2;
+        } surrogate_pair;
         const char      *string;
-        enum ajson_error error;
+        struct {
+            enum ajson_error error;
+            const char *filename;
+            const char *function;
+            size_t      lineno;
+        } error;
     } value;
 };
 
@@ -76,7 +93,7 @@ const char* ajson_error_str(enum ajson_error error);
 typedef int (*ajson_null_func)        (void *ctx);
 typedef int (*ajson_boolean_func)     (void *ctx, bool        value);
 typedef int (*ajson_number_func)      (void *ctx, double      value);
-typedef int (*ajson_integer_func)     (void *ctx, long        value);
+typedef int (*ajson_integer_func)     (void *ctx, int64_t    value);
 typedef int (*ajson_string_func)      (void *ctx, const char* value);
 typedef int (*ajson_begin_array_func) (void *ctx);
 typedef int (*ajson_end_array_func)   (void *ctx);
