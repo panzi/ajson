@@ -157,6 +157,60 @@ int ajson_cb_parse_file(ajson_cb_parser *parser, FILE* stream);
 int ajson_cb_parse_buf (ajson_cb_parser *parser, const void* buffer, size_t size);
 int ajson_cb_dispatch  (ajson_cb_parser *parser);
 
+struct ajson_writer_s;
+
+typedef ssize_t (*ajson_write_func)(struct ajson_writer_s *writer, void *buffer, size_t size, size_t index);
+
+struct ajson_writer_s {
+    const char      *indent;
+    size_t           nesting;
+    size_t           nesting_written;
+    ajson_write_func write_func;
+    ajson_write_func next_write_func;
+    uintptr_t        state;
+    char            *stack;
+    size_t           stack_size;
+    size_t           stack_current;
+    union {
+        const char *string;
+        char        character;
+    } buffer;
+    union {
+        bool        boolean;
+        struct {
+            double value;
+            size_t written;
+        } number;
+        struct {
+            union {
+                int64_t  sval;
+                uint64_t uval;
+            } value;
+            uint64_t div;
+        } integer;
+        const char *string;
+    } value;
+};
+
+typedef struct ajson_writer_s ajson_writer;
+
+int  ajson_write_init   (ajson_writer *writer, const char *indent);
+void ajson_write_destroy(ajson_writer *writer);
+
+ssize_t ajson_write_null   (ajson_writer *writer, void *buffer, size_t size);
+ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool        value);
+ssize_t ajson_write_number (ajson_writer *writer, void *buffer, size_t size, double      value);
+ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int64_t     value);
+ssize_t ajson_write_string (ajson_writer *writer, void *buffer, size_t size, const char* value);
+
+ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size);
+ssize_t ajson_write_end_array  (ajson_writer *writer, void *buffer, size_t size);
+
+ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size);
+ssize_t ajson_write_end_object  (ajson_writer *writer, void *buffer, size_t size);
+
+ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, size_t size);
+
 #ifdef __cplusplus
 }
 #endif

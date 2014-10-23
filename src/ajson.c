@@ -124,4 +124,3 @@ void ajson_free(ajson_parser *parser) {
         free(parser);
     }
 }
-
