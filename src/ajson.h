@@ -96,6 +96,8 @@ enum ajson_token ajson_next_token(ajson_parser *parser);
 ajson_parser *ajson_alloc(int flags);
 void          ajson_free (ajson_parser *parser);
 
+int ajson_get_flags(const ajson_parser *parser);
+
 size_t ajson_get_lineno  (const ajson_parser *parser);
 size_t ajson_get_columnno(const ajson_parser *parser);
 

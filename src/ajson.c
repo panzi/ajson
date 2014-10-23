@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+int ajson_get_flags(const ajson_parser *parser) { return parser->flags; }
+
 size_t ajson_get_lineno  (const ajson_parser *parser) { return parser->lineno;   }
 size_t ajson_get_columnno(const ajson_parser *parser) { return parser->columnno; }
 
