@@ -443,6 +443,10 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
         }
         else if (CURR_CH() == '-' || isdigit(CURR_CH())) {
             // parse number
+            // XXX: This is wrong! Floating point value may be longer than integer numbers
+            //      with the same number of bits. They are just less precise then.
+            //      => Range errors are to be detected at the end by checking if the parsed
+            //         value is not finite.
             parser->value.components.positive          = true;
             parser->value.components.exponent_positive = true;
             parser->value.components.isinteger         = true;
@@ -524,7 +528,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
             }
 
             if ((parser->flags & AJSON_FLAG_INTEGER) && parser->value.components.isinteger) {
-                parser->value.integer = parser->value.components.integer;
+                parser->value.integer = parser->value.components.positive ? parser->value.components.integer : -parser->value.components.integer;
                 RETURN(AJSON_TOK_INTEGER);
             }
             else if ((parser->flags & AJSON_FLAG_NUMBER_COMPONENTS) == 0) {
