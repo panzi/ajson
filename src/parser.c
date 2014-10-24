@@ -443,10 +443,6 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
         }
         else if (CURR_CH() == '-' || isdigit(CURR_CH())) {
             // parse number
-            // XXX: This is wrong! Floating point value may be longer than integer numbers
-            //      with the same number of bits. They are just less precise then.
-            //      => Range errors are to be detected at the end by checking if the parsed
-            //         value is not finite.
             parser->value.components.positive          = true;
             parser->value.components.exponent_positive = true;
             parser->value.components.isinteger         = true;
@@ -464,7 +460,19 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                 do {
                     int digit = CURR_CH() - '0';
                     if ((UINT64_MAX - digit) / 10 < parser->value.components.integer) {
-                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE); // XXX: start using double instead of error
+                        // number is not a 64bit integer -> parse floating point number
+                        parser->value.components.isinteger = false;
+                        do {
+                            if (parser->value.components.exponent == UINT64_MAX) {
+                                // At this point the whole 64bit address space would
+                                // be exhausted just for this number, so don't do anything
+                                // more intelligent than raise an range error.
+                                RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
+                            }
+                            parser->value.components.exponent += 1;
+                            READ_NEXT_OR_EOF();
+                        } while(!AT_EOF() && isdigit(CURR_CH()));
+                        break;
                     }
                     parser->value.components.integer *= 10;
                     parser->value.components.integer += digit;
@@ -487,7 +495,11 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     int digit = CURR_CH() - '0';
                     if ((UINT64_MAX - digit) / 10 < parser->value.components.decimal ||
                         parser->value.components.decimal_places == INT64_MAX) {
-                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE); // XXX: start using double instead of error
+                        // ignore further decimal places
+                        do {
+                            READ_NEXT_OR_EOF();
+                        } while (!AT_EOF() && isdigit(CURR_CH()));
+                        break;
                     }
                     parser->value.components.decimal *= 10;
                     parser->value.components.decimal += digit;
@@ -515,7 +527,11 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                 do {
                     int digit = CURR_CH() - '0';
                     if ((UINT64_MAX - digit) / 10 < parser->value.components.exponent) {
-                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
+                        // this will emit infinity or zero (for negative exponents)
+                        parser->value.components.exponent = UINT64_MAX;
+                        do {
+                            READ_NEXT_OR_EOF();
+                        } while (!AT_EOF() && isdigit(CURR_CH()));
                     }
                     parser->value.components.exponent *= 10;
                     parser->value.components.exponent += digit;
@@ -549,10 +565,6 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
 
                 if (!parser->value.components.positive) {
                     number = -number;
-                }
-
-                if (isinf(number)) {
-                    RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
                 }
 
                 parser->value.number = number;
