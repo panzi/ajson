@@ -3,22 +3,36 @@
 
 #include "ajson.h"
 
-int main() {
+int main(int argc, const char *argv[]) {
+    FILE*        fp;
     ajson_parser parser;
+
+    if (argc > 1) {
+        fp = fopen(argv[1], "r");
+        if (!fp) {
+            perror(argv[1]);
+            return 1;
+        }
+    }
+    else {
+        fp = stdin;
+    }
 
     if (ajson_init(&parser, AJSON_FLAG_INTEGER) != 0) {
         perror("ajson_init");
+        if (argc > 1) fclose(fp);
         return 1;
     }
 
     char buf[2];
 
     for (;;) {
-        size_t size = fgets(buf, sizeof(buf), stdin) ? strlen(buf) : 0;
+        size_t size = fgets(buf, sizeof(buf), fp) ? strlen(buf) : 0;
 
         if (ajson_feed(&parser, buf, size) != 0) {
             perror("ajson_feed");
             ajson_destroy(&parser);
+            if (argc > 1) fclose(fp);
             return 1;
         }
 
@@ -36,7 +50,7 @@ int main() {
                 break;
 
             case AJSON_TOK_NUMBER:
-                printf("TOK: number: %lf\n", parser.value.number);
+                printf("TOK: number: %.16g\n", parser.value.number);
                 break;
 
             case AJSON_TOK_INTEGER:
@@ -70,9 +84,10 @@ int main() {
 
             case AJSON_TOK_ERROR:
                 printf("TOK: error\n");
-                fprintf(stderr, "<stdin>:%zu:%zu: ajson_parse: %s\n", parser.lineno, parser.columnno, ajson_error_str(parser.value.error.error));
+                fprintf(stderr, "%s:%zu:%zu: ajson_parse: %s\n", argc > 1 ? argv[1] : "<stdin>", parser.lineno, parser.columnno, ajson_error_str(parser.value.error.error));
                 fprintf(stderr, "%s:%zu: %s: error raised here\n", parser.value.error.filename, parser.value.error.lineno, parser.value.error.function);
                 ajson_destroy(&parser);
+                if (argc > 1) fclose(fp);
                 return 1;
 
             case AJSON_TOK_NEED_DATA:
@@ -85,13 +100,15 @@ int main() {
             break;
     }
 
-    if (ferror(stdin)) {
+    if (ferror(fp)) {
         perror("fread");
         ajson_destroy(&parser);
+        if (argc > 1) fclose(fp);
         return 1;
     }
 
     ajson_destroy(&parser);
+    if (argc > 1) fclose(fp);
 
     return 0;
 }
