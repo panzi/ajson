@@ -464,7 +464,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                 do {
                     int digit = CURR_CH() - '0';
                     if ((UINT64_MAX - digit) / 10 < parser->value.components.integer) {
-                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
+                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE); // XXX: start using double instead of error
                     }
                     parser->value.components.integer *= 10;
                     parser->value.components.integer += digit;
@@ -487,7 +487,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     int digit = CURR_CH() - '0';
                     if ((UINT64_MAX - digit) / 10 < parser->value.components.decimal ||
                         parser->value.components.decimal_places == INT64_MAX) {
-                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE);
+                        RAISE_ERROR(AJSON_ERROR_PARSER_RANGE); // XXX: start using double instead of error
                     }
                     parser->value.components.decimal *= 10;
                     parser->value.components.decimal += digit;

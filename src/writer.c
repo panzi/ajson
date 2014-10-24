@@ -65,7 +65,7 @@ void ajson_writer_free(ajson_writer *writer) {
 }
 
 ssize_t ajson_write_null(ajson_writer *writer, void *buffer, size_t size) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -76,7 +76,7 @@ ssize_t ajson_write_null(ajson_writer *writer, void *buffer, size_t size) {
 }
 
 ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool value) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -88,7 +88,7 @@ ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, boo
 }
 
 ssize_t ajson_write_number(ajson_writer *writer, void *buffer, size_t size, double value) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -100,7 +100,7 @@ ssize_t ajson_write_number(ajson_writer *writer, void *buffer, size_t size, doub
 }
 
 ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int64_t value) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -112,7 +112,7 @@ ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int
 }
 
 ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, const char* value) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -124,7 +124,7 @@ ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, cons
 }
 
 ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -135,7 +135,7 @@ ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size)
 }
 
 ssize_t ajson_write_end_array(ajson_writer *writer, void *buffer, size_t size) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -146,7 +146,7 @@ ssize_t ajson_write_end_array(ajson_writer *writer, void *buffer, size_t size) {
 }
 
 ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -157,7 +157,7 @@ ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size
 }
 
 ssize_t ajson_write_end_object(ajson_writer *writer, void *buffer, size_t size) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
@@ -168,7 +168,7 @@ ssize_t ajson_write_end_object(ajson_writer *writer, void *buffer, size_t size) 
 }
 
 ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, size_t size) {
-    if (size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
     }
