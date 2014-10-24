@@ -38,7 +38,7 @@ const char* ajson_error_str(enum ajson_error error) {
         return "out of memory";
 
     case AJSON_ERROR_PARSER:
-        return "parser error";
+        return "parser in error state";
 
     case AJSON_ERROR_PARSER_UNEXPECTED:
         return "unexpected character";

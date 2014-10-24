@@ -206,18 +206,17 @@ int ajson_writer_pop(ajson_writer *writer) {
 
 #ifdef AJSON_USE_GNUC_ADDRESS_FROM_LABEL
 #pragma GCC diagnostic ignored "-pedantic"
-//#pragma GCC diagnostic ignored "-Wunused-label"
     // http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
     // use offsets instead of absolute addresses to reduce the number of
     // dynamic relocations for code in shared libraries
 
 #   define AUTO_STATE_NAME2(LINE) do_ ## LINE
 #   define AUTO_STATE_NAME(LINE) AUTO_STATE_NAME2(LINE)
-#   define STATE_REF(NAME) (&&do_named_ ## NAME - &&do_named_START)
+#   define STATE_REF(NAME) (&&do_named_ ## NAME - &&do_START)
 #   define STATE(NAME) do_named_ ## NAME :
-#   define AUTO_STATE_REF() (&&AUTO_STATE_NAME(__LINE__) - &&do_named_START)
+#   define AUTO_STATE_REF() (&&AUTO_STATE_NAME(__LINE__) - &&do_START)
 #   define AUTO_STATE() AUTO_STATE_NAME(__LINE__):
-#   define BEGIN_DISPATCH goto *(&&do_named_START + writer->state); do_named_START: {
+#   define BEGIN_DISPATCH goto *(&&do_START + writer->state); do_START: {
 
 #else
 

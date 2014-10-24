@@ -5,7 +5,7 @@
 #include <math.h>
 
 #define AJSON_SET_ERROR(PARSER, ERR) \
-    (PARSER)->value.error.error = (ERR); \
+    (PARSER)->value.error.error    = (ERR); \
     (PARSER)->value.error.filename = __FILE__; \
     (PARSER)->value.error.function = __func__; \
     (PARSER)->value.error.lineno   = __LINE__;
