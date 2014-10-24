@@ -52,6 +52,9 @@ const char* ajson_error_str(enum ajson_error error) {
     case AJSON_ERROR_PARSER_UNICODE:
         return "illegal unicode codepoint";
 
+    case AJSON_ERROR_PARSER_RANGE:
+        return "numeric value out of range";
+
     case AJSON_ERROR_PARSER_UNEXPECTED_EOF:
         return "unexpected end of file";
 
