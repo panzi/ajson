@@ -159,11 +159,10 @@ int ajson_cb_dispatch  (ajson_cb_parser *parser);
 
 struct ajson_writer_s;
 
-typedef ssize_t (*ajson_write_func)(struct ajson_writer_s *writer, void *buffer, size_t size, size_t index);
+typedef ssize_t (*ajson_write_func)(struct ajson_writer_s *writer, char *buffer, size_t size, size_t index);
 
 struct ajson_writer_s {
     const char      *indent;
-    size_t           nesting;
     size_t           nesting_written;
     ajson_write_func write_func;
     ajson_write_func next_write_func;
@@ -194,8 +193,11 @@ struct ajson_writer_s {
 
 typedef struct ajson_writer_s ajson_writer;
 
-int  ajson_write_init   (ajson_writer *writer, const char *indent);
-void ajson_write_destroy(ajson_writer *writer);
+int  ajson_writer_init   (ajson_writer *writer, const char *indent);
+void ajson_writer_destroy(ajson_writer *writer);
+
+ajson_writer *ajson_writer_alloc(const char *indent);
+void          ajson_writer_free (ajson_writer *writer);
 
 ssize_t ajson_write_null   (ajson_writer *writer, void *buffer, size_t size);
 ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool        value);
