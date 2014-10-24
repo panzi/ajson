@@ -462,6 +462,12 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     if ((UINT64_MAX - digit) / 10 < parser->value.components.integer) {
                         // number is not a 64bit integer -> parse floating point number
                         parser->value.components.isinteger = false;
+
+                        // round next digit
+                        if (digit >= 5 && parser->value.components.integer < UINT64_MAX) {
+                            parser->value.components.integer += 1;
+                        }
+
                         do {
                             if (parser->value.components.exponent == UINT64_MAX) {
                                 // At this point the whole 64bit address space would
@@ -472,6 +478,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                             parser->value.components.exponent += 1;
                             READ_NEXT_OR_EOF();
                         } while(!AT_EOF() && isdigit(CURR_CH()));
+
                         break;
                     }
                     parser->value.components.integer *= 10;
@@ -495,10 +502,16 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     int digit = CURR_CH() - '0';
                     if ((UINT64_MAX - digit) / 10 < parser->value.components.decimal ||
                         parser->value.components.decimal_places == INT64_MAX) {
+                        // round next digit
+                        if (digit >= 5 && parser->value.components.decimal < UINT64_MAX) {
+                            parser->value.components.decimal += 1;
+                        }
+
                         // ignore further decimal places
                         do {
                             READ_NEXT_OR_EOF();
                         } while (!AT_EOF() && isdigit(CURR_CH()));
+
                         break;
                     }
                     parser->value.components.decimal *= 10;
