@@ -513,41 +513,41 @@ ssize_t _ajson_write_string(ajson_writer *writer, char *buffer, size_t size, siz
                 writer->value.string.value += count;
 
                 if (codepoint < 0x10000) {
-                    writer->value.string.buffer.pair.unit1 = codepoint;
-                    writer->value.string.buffer.pair.unit2 = 0;
+                    writer->value.string.buffer.utf16.unit1 = codepoint;
+                    writer->value.string.buffer.utf16.unit2 = 0;
                 }
                 else {
-                    writer->value.string.buffer.pair.unit1 = (codepoint >> 10)   + 0xD7C0;
-                    writer->value.string.buffer.pair.unit2 = (codepoint & 0x3FF) + 0xDC00;
+                    writer->value.string.buffer.utf16.unit1 = (codepoint >> 10)   + 0xD7C0;
+                    writer->value.string.buffer.utf16.unit2 = (codepoint & 0x3FF) + 0xDC00;
                 }
 
                 WRITE_STR("\\u");
 
-                ch = (writer->value.string.buffer.pair.unit1 >> 12) & 0x0F;
+                ch = (writer->value.string.buffer.utf16.unit1 >> 12) & 0x0F;
                 WRITE_CHAR(TO_HEX(ch));
 
-                ch = (writer->value.string.buffer.pair.unit1 >> 8) & 0x0F;
+                ch = (writer->value.string.buffer.utf16.unit1 >> 8) & 0x0F;
                 WRITE_CHAR(TO_HEX(ch));
 
-                ch = (writer->value.string.buffer.pair.unit1 >> 4) & 0x0F;
+                ch = (writer->value.string.buffer.utf16.unit1 >> 4) & 0x0F;
                 WRITE_CHAR(TO_HEX(ch));
 
-                ch = writer->value.string.buffer.pair.unit1 & 0x0F;
+                ch = writer->value.string.buffer.utf16.unit1 & 0x0F;
                 WRITE_CHAR(TO_HEX(ch));
 
-                if (writer->value.string.buffer.pair.unit2) {
+                if (writer->value.string.buffer.utf16.unit2) {
                     WRITE_STR("\\u");
 
-                    ch = (writer->value.string.buffer.pair.unit2 >> 12) & 0x0F;
+                    ch = (writer->value.string.buffer.utf16.unit2 >> 12) & 0x0F;
                     WRITE_CHAR(TO_HEX(ch));
 
-                    ch = (writer->value.string.buffer.pair.unit2 >> 8) & 0x0F;
+                    ch = (writer->value.string.buffer.utf16.unit2 >> 8) & 0x0F;
                     WRITE_CHAR(TO_HEX(ch));
 
-                    ch = (writer->value.string.buffer.pair.unit2 >> 4) & 0x0F;
+                    ch = (writer->value.string.buffer.utf16.unit2 >> 4) & 0x0F;
                     WRITE_CHAR(TO_HEX(ch));
 
-                    ch = writer->value.string.buffer.pair.unit2 & 0x0F;
+                    ch = writer->value.string.buffer.utf16.unit2 & 0x0F;
                     WRITE_CHAR(TO_HEX(ch));
                 }
             }

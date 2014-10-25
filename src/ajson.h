@@ -19,7 +19,7 @@ extern "C" {
 #define AJSON_FLAGS_NONE 0
 #define AJSON_FLAGS_ALL  (AJSON_FLAG_INTEGER | AJSON_FLAG_NUMBER_COMPONENTS)
 
-#define AJSON_WRITER_FLAG_ASCII 1
+#define AJSON_WRITER_FLAG_ASCII 1 // writer ASCII compatible output (use \u#### escapes)
 
 #define AJSON_WRITER_FLAGS_NONE 0
 #define AJSON_WRITER_FLAGS_ALL  AJSON_WRITER_FLAG_ASCII
@@ -59,18 +59,19 @@ enum ajson_error {
 };
 
 struct ajson_parser_s {
-    int          flags;
-    const char  *input;
-    size_t       input_size;
-    size_t       input_current;
-    size_t       lineno;
-    size_t       columnno;
-    uintptr_t   *stack;
-    size_t       stack_size;
-    size_t       stack_current;
-    char        *buffer;
-    size_t       buffer_size;
-    size_t       buffer_used;
+    int                 flags;
+    enum ajson_encoding encoding;
+    const char         *input;
+    size_t              input_size;
+    size_t              input_current;
+    size_t              lineno;
+    size_t              columnno;
+    uintptr_t          *stack;
+    size_t              stack_size;
+    size_t              stack_current;
+    char               *buffer;
+    size_t              buffer_size;
+    size_t              buffer_used;
     union {
         bool          boolean;
         double        number;
@@ -87,7 +88,8 @@ struct ajson_parser_s {
         struct {
             uint16_t  unit1;
             uint16_t  unit2;
-        } surrogate_pair;
+        } utf16;
+        unsigned char utf8[4];
         const char   *string;
         struct {
             enum ajson_error error;
@@ -100,12 +102,12 @@ struct ajson_parser_s {
 
 typedef struct ajson_parser_s ajson_parser;
 
-int              ajson_init      (ajson_parser *parser, int flags);
+int              ajson_init      (ajson_parser *parser, int flags, enum ajson_encoding encoding);
 void             ajson_destroy   (ajson_parser *parser);
 int              ajson_feed      (ajson_parser *parser, const void *buffer, size_t size);
 enum ajson_token ajson_next_token(ajson_parser *parser);
 
-ajson_parser *ajson_alloc(int flags);
+ajson_parser *ajson_alloc(int flags, enum ajson_encoding encoding);
 void          ajson_free (ajson_parser *parser);
 
 int ajson_get_flags(const ajson_parser *parser);
@@ -209,7 +211,7 @@ struct ajson_writer_s {
                 struct {
                     uint16_t unit1;
                     uint16_t unit2;
-                } pair;
+                } utf16;
             } buffer;
         } string;
     } value;

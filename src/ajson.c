@@ -66,15 +66,16 @@ const char* ajson_error_str(enum ajson_error error) {
     }
 }
 
-int ajson_init(ajson_parser *parser, int flags) {
+int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding) {
     if (flags & ~AJSON_FLAGS_ALL) {
         errno = EINVAL;
         return -1;
     }
 
     memset(parser, 0, sizeof(ajson_parser));
-    parser->lineno = 1;
-    parser->flags  = flags;
+    parser->lineno   = 1;
+    parser->flags    = flags;
+    parser->encoding = encoding;
 
     parser->stack = calloc(AJSON_STACK_SIZE, sizeof(uintptr_t));
     if (!parser->stack) {
@@ -108,11 +109,11 @@ int ajson_feed(ajson_parser *parser, const void *buffer, size_t size) {
     return 0;
 }
 
-ajson_parser *ajson_alloc(int flags) {
+ajson_parser *ajson_alloc(int flags, enum ajson_encoding encoding) {
     ajson_parser *parser = malloc(sizeof(ajson_parser));
 
     if (parser) {
-        if (ajson_init(parser, flags) != 0) {
+        if (ajson_init(parser, flags, encoding) != 0) {
             free(parser);
             return NULL;
         }
@@ -176,7 +177,7 @@ int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint) {
         return 1;
     }
     else if (unit1 < 0xC2) {
-        // unexpected continuation or overlogn 2-byte sequence
+        // unexpected continuation or overlong 2-byte sequence
     }
     else if (unit1 < 0xE0) {
         // 2-byte sequence

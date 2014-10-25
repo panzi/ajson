@@ -19,13 +19,13 @@ int main(int argc, const char *argv[]) {
         fp = stdin;
     }
 
-    if (ajson_init(&parser, AJSON_FLAG_INTEGER) != 0) {
+    if (ajson_init(&parser, AJSON_FLAG_INTEGER, AJSON_ENC_UTF8) != 0) {
         perror("ajson_init");
         if (argc > 1) fclose(fp);
         return 1;
     }
 
-    if (ajson_writer_init(&writer, AJSON_WRITER_FLAGS_NONE, "\t") != 0) {
+    if (ajson_writer_init(&writer, AJSON_WRITER_FLAG_ASCII, "\t") != 0) {
         perror("ajson_writer_init");
         if (argc > 1) fclose(fp);
         ajson_destroy(&parser);
