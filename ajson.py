@@ -114,10 +114,11 @@ class ParserError(Exception):
 			self.source_function if self.source_function is not None else 'N/A')
 
 class Parser(object):
-	__slots__ = '_parser',
+	__slots__ = '_parser', '_data'
 
 	def __init__(self,flags=FLAGS_NONE):
 		self._parser = _ajson_alloc(flags)
+		self._data   = None
 		if not self._parser:
 			_error_from_errno()
 
@@ -139,6 +140,7 @@ class Parser(object):
 	def feed(self,data):
 		if _ajson_feed(self._parser, data, len(data)) != 0:
 			_error_from_errno()
+		self._data = data # keep reference to data so it won't get GCed
 
 	def send(self,data):
 		self.feed(data)
@@ -428,7 +430,8 @@ class Writer(object):
 
 	def __init__(self,flags=WRITER_FLAGS_NONE,indent=None,buffer_size=DEFAULT_BUFFER_SIZE):
 		if buffer_size < 1:
-			raise ValueError("size musst be bigger than zero")
+			raise ValueError("buffer_size musst be bigger than zero")
+		# keep reference to indent so it won't get GCed
 		self._indent = None if indent is None else indent.encode('utf-8')
 		self._buffer = ctypes.create_string_buffer(buffer_size)
 		self._writer = _ajson_writer_alloc(flags,self._indent)
@@ -543,15 +546,14 @@ def _make_file_write_func(write_func):
 		size   = write_func(ptr, buf, bufsiz, *args)
 
 		while size == bufsiz:
-			fp.write(buf.raw)
-
+			fp.write(buf)
 			size = _ajson_write_continue(ptr, buf, bufsiz)
 
 		if size < 0:
 			_error_from_errno()
 
 		if size > 0:
-			fp.write(buf[:size])
+			fp.write(memoryview(buf)[:size])
 
 	return _write_func
 
@@ -560,8 +562,9 @@ class FileWriter(object):
 
 	def __init__(self,file,flags=WRITER_FLAGS_NONE,indent=None,buffer_size=DEFAULT_BUFFER_SIZE):
 		if buffer_size < 1:
-			raise ValueError("size musst be bigger than zero")
+			raise ValueError("buffer_size musst be bigger than zero")
 		self._file   = file
+		# keep reference to indent so it won't get GCed
 		self._indent = None if indent is None else indent.encode('utf-8')
 		self._buffer = ctypes.create_string_buffer(buffer_size)
 		self._writer = _ajson_writer_alloc(flags,self._indent)
