@@ -127,3 +127,135 @@ void ajson_free(ajson_parser *parser) {
         free(parser);
     }
 }
+
+int ajson_encode_utf8(uint32_t codepoint, char buffer[]) {
+    if (codepoint < 0x80) {
+        // 0xxxxxxx
+        buffer[0] =  codepoint;
+        return 1;
+    }
+    else if (codepoint <= 0x7FF) {
+        // 110xxxxx 10xxxxxx
+        buffer[0] = (codepoint >> 6) + 0xC0;
+        buffer[1] = (codepoint & 0x3F) + 0x80;
+        return 2;
+    }
+    else if (codepoint <= 0xFFFF) {
+        // 1110xxxx 10xxxxxx 10xxxxxx
+        buffer[0] = (codepoint >> 12) + 0xE0;
+        buffer[1] = ((codepoint >> 6) & 0x3F) + 0x80;
+        buffer[2] = (codepoint & 0x3F) + 0x80;
+        return 3;
+    }
+    else if (codepoint <= 0x10FFFF) {
+        // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        buffer[0] = (codepoint >> 18) + 0xF0;
+        buffer[1] = ((codepoint >> 12) & 0x3F) + 0x80;
+        buffer[2] = ((codepoint >> 6) & 0x3F) + 0x80;
+        buffer[3] = (codepoint & 0x3F) + 0x80;
+        return 4;
+    }
+    errno = EINVAL;
+    return -1;
+}
+
+int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint) {
+    if (size == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    unsigned char unit1 = buffer[0];
+    unsigned char unit2, unit3, unit4;
+
+    if (unit1 < 0x80) {
+        // single byte
+        if (codepoint) {
+            *codepoint = unit1;
+        }
+        return 1;
+    }
+    else if (unit1 < 0xC2) {
+        // unexpected continuation or overlogn 2-byte sequence
+    }
+    else if (unit1 < 0xE0) {
+        // 2-byte sequence
+        if (size < 2) {
+            errno = EINVAL;
+            return -2;
+        }
+
+        unit2 = buffer[1];
+        if ((unit2 & 0xC0) != 0x80) {
+            errno = EILSEQ;
+            return -2;
+        }
+
+        if (codepoint) {
+            *codepoint = (unit1 << 6) + unit2 - 0x3080;
+        }
+
+        return 2;
+    }
+    else if (unit1 < 0xF0) {
+        // 3-byte sequence
+        if (size < 3) {
+            errno = EINVAL;
+            return -3;
+        }
+
+        unit2 = buffer[1];
+        unit3 = buffer[2];
+
+        if ((unit2 & 0xC0) != 0x80 || (unit1 == 0xE0 && unit2 < 0xA0)) {
+            errno = EILSEQ;
+            return -2;
+        }
+
+        if ((unit3 & 0xC0) != 0x80) {
+            errno = EILSEQ;
+            return -3;
+        }
+
+        if (codepoint) {
+            *codepoint = (unit1 << 12) + (unit2 << 6) + unit3 - 0xE2080;
+        }
+
+        return 3;
+    }
+    else if (unit1 < 0xF5) {
+        // 4-byte sequence
+        if (size < 4) {
+            errno = EINVAL;
+            return -4;
+        }
+
+        unit2 = buffer[1];
+        unit3 = buffer[2];
+        unit4 = buffer[4];
+
+        if ((unit2 & 0xC0) != 0x80 || (unit1 == 0xF0 && unit2 < 0x90) || (unit1 == 0xF4 && unit2 >= 0x90)) {
+            errno = EILSEQ;
+            return -2;
+        }
+
+        if ((unit3 & 0xC0) != 0x80) {
+            errno = EILSEQ;
+            return -3;
+        }
+
+        if ((unit4 & 0xC0) != 0x80) {
+            errno = EILSEQ;
+            return -4;
+        }
+
+        if (codepoint) {
+            *codepoint = (unit1 << 18) + (unit2 << 12) + (unit3 << 6) + unit4 - 0x3C82080;
+        }
+
+        return 4;
+    }
+
+    errno = EILSEQ;
+    return -1;
+}

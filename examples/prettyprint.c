@@ -25,7 +25,7 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
 
-    if (ajson_writer_init(&writer, "\t") != 0) {
+    if (ajson_writer_init(&writer, AJSON_WRITER_FLAGS_NONE, "\t") != 0) {
         perror("ajson_writer_init");
         if (argc > 1) fclose(fp);
         ajson_destroy(&parser);
@@ -69,7 +69,7 @@ int main(int argc, const char *argv[]) {
                 break;
 
             case AJSON_TOK_STRING:
-                written = ajson_write_string(&writer, outbuf, sizeof(outbuf), parser.value.string);
+                written = ajson_write_string_utf8(&writer, outbuf, sizeof(outbuf), parser.value.string);
                 break;
 
             case AJSON_TOK_BEGIN_ARRAY:

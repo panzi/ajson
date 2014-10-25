@@ -26,7 +26,16 @@ static ssize_t _ajson_write_end_array  (ajson_writer *writer, char *buffer, size
 static ssize_t _ajson_write_begin_object(ajson_writer *writer, char *buffer, size_t size, size_t index);
 static ssize_t _ajson_write_end_object  (ajson_writer *writer, char *buffer, size_t size, size_t index);
 
-int ajson_writer_init(ajson_writer *writer, const char *indent) {
+
+int         ajson_writer_get_flags (ajson_writer *writer) { return writer->flags;  }
+const char *ajson_writer_get_indent(ajson_writer *writer) { return writer->indent; }
+
+int ajson_writer_init(ajson_writer *writer, int flags, const char *indent) {
+    if (flags & ~AJSON_WRITER_FLAGS_ALL) {
+        errno = EINVAL;
+        return -1;
+    }
+
     if (indent) {
         for (const char *ptr = indent; *ptr; ++ ptr) {
             if (!isspace(*ptr)) {
@@ -37,6 +46,7 @@ int ajson_writer_init(ajson_writer *writer, const char *indent) {
     }
 
     memset(writer, 0, sizeof(ajson_writer));
+    writer->flags      = flags;
     writer->indent     = indent;
     writer->write_func = &_ajson_write_dummy;
     writer->stack      = calloc(AJSON_STACK_SIZE, 1);
@@ -56,11 +66,11 @@ void ajson_writer_destroy(ajson_writer *writer) {
     writer->stack_current = 0;
 }
 
-ajson_writer *ajson_writer_alloc(const char *indent) {
+ajson_writer *ajson_writer_alloc(int flags, const char *indent) {
     ajson_writer *writer = malloc(sizeof(ajson_writer));
 
     if (writer) {
-        if (ajson_writer_init(writer, indent) != 0) {
+        if (ajson_writer_init(writer, flags, indent) != 0) {
             free(writer);
             return NULL;
         }
@@ -121,7 +131,7 @@ ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int
     return _ajson_write_prelude(writer, buffer, size, 0);
 }
 
-ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, const char* value) {
+ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, const char* value, enum ajson_encoding encoding) {
     if (size == 0 || size > SSIZE_MAX || !value) {
         errno = EINVAL;
         return -1;
@@ -129,8 +139,17 @@ ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, cons
     writer->write_func      = &_ajson_write_prelude;
     writer->next_write_func = &_ajson_write_string;
     writer->state           = 0;
-    writer->value.string    = value;
+    writer->value.string.value    = value;
+    writer->value.string.encoding = encoding;
     return _ajson_write_prelude(writer, buffer, size, 0);
+}
+
+ssize_t ajson_write_string_latin1(ajson_writer *writer, void *buffer, size_t size, const char* value) {
+    return ajson_write_string(writer, buffer, size, value, AJSON_ENC_LATIN1);
+}
+
+ssize_t ajson_write_string_utf8(ajson_writer *writer, void *buffer, size_t size, const char* value) {
+    return ajson_write_string(writer, buffer, size, value, AJSON_ENC_UTF8);
 }
 
 ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size) {
@@ -247,6 +266,7 @@ enum ajson_named_states {
 #define END_DISPATCH  AUTO_STATE(); writer->state = AUTO_STATE_REF(); } return index;
 #define RAISE_ERROR() AUTO_STATE(); writer->state = AUTO_STATE_REF(); return -1;
 #define CONTINUE(NAME) writer->state = STATE_REF(NAME); return index;
+#define TO_HEX(CH) ((CH) > 9 ? 'a' + (CH) - 10 : '0' + (CH))
 
 #define WRITE_CHAR(CH) \
     writer->buffer.character = (CH); \
@@ -417,53 +437,130 @@ ssize_t _ajson_write_integer(ajson_writer *writer, char *buffer, size_t size, si
     END_DISPATCH;
 }
 
+// return length of string, but at most return 4 (don't scan the whole string)
+// this is useful in combination with ajson_decode_utf8, which needs a size but never reads more than 4 bytes
+static inline size_t ajson_strlen4(const char* str) {
+    if (!str[0]) return 0;
+    if (!str[1]) return 1;
+    if (!str[2]) return 2;
+    if (!str[3]) return 3;
+    return 4;
+}
+
 ssize_t _ajson_write_string(ajson_writer *writer, char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     WRITE_CHAR('"');
 
     for (;;) {
-        char ch = *writer->value.string;
+        unsigned char ch = *writer->value.string.value;
 
         if (!ch)
             break;
 
         if (ch == '"') {
             WRITE_STR("\\\"");
+            writer->value.string.value += 1;
         }
         else if (ch == '\\') {
             WRITE_STR("\\\\");
+            writer->value.string.value += 1;
         }
         else if (ch == '\b') {
             WRITE_STR("\\b");
+            writer->value.string.value += 1;
         }
         else if (ch == '\f') {
             WRITE_STR("\\f");
+            writer->value.string.value += 1;
         }
         else if (ch == '\n') {
             WRITE_STR("\\n");
+            writer->value.string.value += 1;
         }
         else if (ch == '\r') {
             WRITE_STR("\\r");
+            writer->value.string.value += 1;
         }
         else if (ch == '\t') {
             WRITE_STR("\\t");
+            writer->value.string.value += 1;
         }
-        else if ((ch >= 0x00 && ch <= 0x1F) || ch == 0x7F) {
-            // XXX: does not encode non-ASCII control characters (U+0080–U+009F)
+        else if (ch <= 0x1F || ch == 0x7F || (writer->value.string.encoding == AJSON_ENC_LATIN1 && ch >= 0x80 && ch <= 0x9F)) {
             WRITE_STR("\\u00");
 
-            ch = *writer->value.string >> 4;
-            WRITE_CHAR(ch > 9 ? 'a' + ch : '0' + ch);
+            ch = *writer->value.string.value >> 4;
+            WRITE_CHAR(TO_HEX(ch));
 
-            ch = *writer->value.string & 0x0F;
-            WRITE_CHAR(ch > 9 ? 'a' + ch : '0' + ch);
+            ch = *writer->value.string.value & 0x0F;
+            WRITE_CHAR(TO_HEX(ch));
+
+            writer->value.string.value += 1;
+        }
+        else if (ch < 0x7F || writer->value.string.encoding == AJSON_ENC_LATIN1) {
+            WRITE_CHAR(ch);
+            writer->value.string.value += 1;
         }
         else {
-            WRITE_CHAR(ch);
-        }
+            uint32_t codepoint = 0;
+            int count = ajson_decode_utf8(writer->value.string.value, ajson_strlen4(writer->value.string.value), &codepoint);
+            if (count <= 0) {
+                RAISE_ERROR();
+            }
 
-        ++ writer->value.string;
+            if (writer->flags & AJSON_WRITER_FLAG_ASCII || (codepoint >= 0x80 && codepoint <= 0x9F)) {
+                // encode as \u####(\u####), i.e. ASCII encoded UTF-16
+                writer->value.string.value += count;
+
+                if (codepoint < 0x10000) {
+                    writer->value.string.buffer.pair.unit1 = codepoint;
+                    writer->value.string.buffer.pair.unit2 = 0;
+                }
+                else {
+                    writer->value.string.buffer.pair.unit1 = (codepoint >> 10)   + 0xD7C0;
+                    writer->value.string.buffer.pair.unit2 = (codepoint & 0x3FF) + 0xDC00;
+                }
+
+                WRITE_STR("\\u");
+
+                ch = (writer->value.string.buffer.pair.unit1 >> 12) & 0x0F;
+                WRITE_CHAR(TO_HEX(ch));
+
+                ch = (writer->value.string.buffer.pair.unit1 >> 8) & 0x0F;
+                WRITE_CHAR(TO_HEX(ch));
+
+                ch = (writer->value.string.buffer.pair.unit1 >> 4) & 0x0F;
+                WRITE_CHAR(TO_HEX(ch));
+
+                ch = writer->value.string.buffer.pair.unit1 & 0x0F;
+                WRITE_CHAR(TO_HEX(ch));
+
+                if (writer->value.string.buffer.pair.unit2) {
+                    WRITE_STR("\\u");
+
+                    ch = (writer->value.string.buffer.pair.unit2 >> 12) & 0x0F;
+                    WRITE_CHAR(TO_HEX(ch));
+
+                    ch = (writer->value.string.buffer.pair.unit2 >> 8) & 0x0F;
+                    WRITE_CHAR(TO_HEX(ch));
+
+                    ch = (writer->value.string.buffer.pair.unit2 >> 4) & 0x0F;
+                    WRITE_CHAR(TO_HEX(ch));
+
+                    ch = writer->value.string.buffer.pair.unit2 & 0x0F;
+                    WRITE_CHAR(TO_HEX(ch));
+                }
+            }
+            else {
+                // copy input because it is already UTF-8
+                for (writer->value.string.buffer.count = count;
+                     writer->value.string.buffer.count > 0;
+                     -- writer->value.string.buffer.count) {
+                    WRITE_CHAR(*writer->value.string.value);
+                    writer->value.string.value += 1;
+                }
+            }
+        }
     }
 
     WRITE_CHAR('"');

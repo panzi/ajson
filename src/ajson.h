@@ -19,6 +19,16 @@ extern "C" {
 #define AJSON_FLAGS_NONE 0
 #define AJSON_FLAGS_ALL  (AJSON_FLAG_INTEGER | AJSON_FLAG_NUMBER_COMPONENTS)
 
+#define AJSON_WRITER_FLAG_ASCII 1
+
+#define AJSON_WRITER_FLAGS_NONE 0
+#define AJSON_WRITER_FLAGS_ALL  AJSON_WRITER_FLAG_ASCII
+
+enum ajson_encoding {
+    AJSON_ENC_LATIN1,
+    AJSON_ENC_UTF8
+};
+
 enum ajson_token {
     AJSON_TOK_NEED_DATA,
     AJSON_TOK_NULL,
@@ -164,6 +174,7 @@ struct ajson_writer_s;
 typedef ssize_t (*ajson_write_func)(struct ajson_writer_s *writer, char *buffer, size_t size, size_t index);
 
 struct ajson_writer_s {
+    int              flags;
     const char      *indent;
     size_t           nesting_written;
     ajson_write_func write_func;
@@ -177,7 +188,7 @@ struct ajson_writer_s {
         char        character;
     } buffer;
     union {
-        bool        boolean;
+        bool boolean;
         struct {
             double value;
             size_t written;
@@ -190,23 +201,35 @@ struct ajson_writer_s {
             } value;
             uint64_t div;
         } integer;
-        const char *string;
+        struct {
+            const char         *value;
+            enum ajson_encoding encoding;
+            union {
+                size_t       count;
+                struct {
+                    uint16_t unit1;
+                    uint16_t unit2;
+                } pair;
+            } buffer;
+        } string;
     } value;
 };
 
 typedef struct ajson_writer_s ajson_writer;
 
-int  ajson_writer_init   (ajson_writer *writer, const char *indent);
+int  ajson_writer_init   (ajson_writer *writer, int flags, const char *indent);
 void ajson_writer_destroy(ajson_writer *writer);
 
-ajson_writer *ajson_writer_alloc(const char *indent);
+ajson_writer *ajson_writer_alloc(int flags, const char *indent);
 void          ajson_writer_free (ajson_writer *writer);
 
 ssize_t ajson_write_null   (ajson_writer *writer, void *buffer, size_t size);
 ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool        value);
 ssize_t ajson_write_number (ajson_writer *writer, void *buffer, size_t size, double      value);
 ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int64_t     value);
-ssize_t ajson_write_string (ajson_writer *writer, void *buffer, size_t size, const char* value);
+ssize_t ajson_write_string (ajson_writer *writer, void *buffer, size_t size, const char* value, enum ajson_encoding encoding);
+ssize_t ajson_write_string_latin1(ajson_writer *writer, void *buffer, size_t size, const char* value);
+ssize_t ajson_write_string_utf8  (ajson_writer *writer, void *buffer, size_t size, const char* value);
 
 ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size);
 ssize_t ajson_write_end_array  (ajson_writer *writer, void *buffer, size_t size);
@@ -215,6 +238,13 @@ ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size
 ssize_t ajson_write_end_object  (ajson_writer *writer, void *buffer, size_t size);
 
 ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, size_t size);
+
+int         ajson_writer_get_flags (ajson_writer *writer);
+const char *ajson_writer_get_indent(ajson_writer *writer);
+
+// buffer musst be at least 4 bytes big
+int ajson_encode_utf8(uint32_t codepoint, char buffer[]);
+int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint);
 
 #ifdef __cplusplus
 }
