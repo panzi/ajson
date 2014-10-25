@@ -222,7 +222,6 @@ int ajson_writer_pop(ajson_writer *writer) {
 
 enum ajson_named_states {
     AJSON_STATE_START,
-    AJSON_STATE_NUMBER,
 
     AJSON_STATECOUNT
 };
@@ -339,43 +338,33 @@ ssize_t _ajson_write_number(ajson_writer *writer, char *buffer, size_t size, siz
 
     if (isfinite(writer->value.number.value)) {
         size_t nfree = size - index;
-        int count = snprintf(((char*)buffer) + index, nfree, "%.16g", writer->value.number.value);
-        if (count < 0) {
-            RAISE_ERROR();
-        }
 
-        writer->value.number.written = nfree;
-        if (writer->value.number.written < (size_t)count) {
-            index = size;
-
-            CONTINUE(NUMBER);
-            STATE(NUMBER);
-
-            char buf[32];
-            count = snprintf(buf, sizeof(buf), "%.16g", writer->value.number.value);
+        if (nfree >= sizeof(writer->value.number.buffer)) {
+            // this code path saves one memcpy
+            int count = snprintf(buffer, nfree, "%.16g", writer->value.number.value);
             if (count < 0) {
                 RAISE_ERROR();
             }
-            else if ((size_t)count > sizeof(buf)) {
+            else if ((size_t)count > nfree) {
                 errno = ENOBUFS;
                 RAISE_ERROR();
             }
 
-            nfree = size - index;
-            size_t nrest = (size_t)count - writer->value.number.written;
-            if (nfree < nrest) {
-                memcpy(((char*)buffer) + index, buf + writer->value.number.written, nfree);
-                writer->value.number.written += nfree;
-                index = size;
-                CONTINUE(NUMBER);
-            }
-            else {
-                memcpy(((char*)buffer) + index, buf + writer->value.number.written, nrest);
-                index += nrest;
-            }
+            index += (size_t)count;
         }
         else {
-            index += count;
+            writer->value.number.written = 0;
+
+            int count = snprintf(writer->value.number.buffer, sizeof(writer->value.number.buffer), "%.16g", writer->value.number.value);
+            if (count < 0) {
+                RAISE_ERROR();
+            }
+            else if ((size_t)count > sizeof(writer->value.number.buffer)) {
+                errno = ENOBUFS;
+                RAISE_ERROR();
+            }
+
+            WRITE_STR(writer->value.number.buffer);
         }
     }
     else {

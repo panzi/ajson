@@ -181,6 +181,7 @@ struct ajson_writer_s {
         struct {
             double value;
             size_t written;
+            char   buffer[32];
         } number;
         struct {
             union {

@@ -3,112 +3,22 @@
 import ctypes
 import errno
 
-from ctypes import get_errno
-from errno  import EINVAL, ENOMEM
-from os     import strerror
-from io     import DEFAULT_BUFFER_SIZE
+from functools import wraps
+from ctypes    import get_errno
+from errno     import EINVAL, ENOMEM
+from os        import strerror
+from io        import DEFAULT_BUFFER_SIZE
 
-lib = ctypes.CDLL("./build/src/libajson10.so",use_errno=True)
+try:
+	xrange
+except NameError:
+	xrange = range
 
-_ajson_init = lib.ajson_init
-_ajson_init.argtypes = [ctypes.c_void_p, ctypes.c_int]
-_ajson_init.restype  = ctypes.c_int
-
-_ajson_destroy = lib.ajson_destroy
-_ajson_destroy.argtypes = [ctypes.c_void_p]
-_ajson_destroy.restype  = None
-
-_ajson_feed = lib.ajson_feed
-_ajson_feed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t]
-_ajson_feed.restype  = ctypes.c_int
-
-_ajson_next_token = lib.ajson_next_token
-_ajson_feed.argtypes = [ctypes.c_void_p]
-_ajson_feed.restype  = ctypes.c_int
-
-_ajson_get_flags = lib.ajson_get_flags
-_ajson_get_flags.argtypes = [ctypes.c_void_p]
-_ajson_get_flags.restype  = ctypes.c_int
-
-_ajson_get_lineno = lib.ajson_get_lineno
-_ajson_get_lineno.argtypes = [ctypes.c_void_p]
-_ajson_get_lineno.restype  = ctypes.c_size_t
-
-_ajson_get_columnno = lib.ajson_get_columnno
-_ajson_get_columnno.argtypes = [ctypes.c_void_p]
-_ajson_get_columnno.restype  = ctypes.c_size_t
-
-_ajson_get_boolean = lib.ajson_get_boolean
-_ajson_get_boolean.argtypes = [ctypes.c_void_p]
-_ajson_get_boolean.restype  = ctypes.c_bool
-
-_ajson_get_number = lib.ajson_get_number
-_ajson_get_number.argtypes = [ctypes.c_void_p]
-_ajson_get_number.restype  = ctypes.c_double
-
-_ajson_get_integer = lib.ajson_get_integer
-_ajson_get_integer.argtypes = [ctypes.c_void_p]
-_ajson_get_integer.restype  = ctypes.c_int64
-
-_ajson_get_string = lib.ajson_get_string
-_ajson_get_string.argtypes = [ctypes.c_void_p]
-_ajson_get_string.restype  = ctypes.c_char_p
-
-_ajson_get_components_positive = lib.ajson_get_components_positive
-_ajson_get_components_positive.argtypes = [ctypes.c_void_p]
-_ajson_get_components_positive.restype  = ctypes.c_bool
-
-_ajson_get_components_exponent_positive = lib.ajson_get_components_exponent_positive
-_ajson_get_components_exponent_positive.argtypes = [ctypes.c_void_p]
-_ajson_get_components_exponent_positive.restype  = ctypes.c_bool
-
-_ajson_get_components_integer = lib.ajson_get_components_integer
-_ajson_get_components_integer.argtypes = [ctypes.c_void_p]
-_ajson_get_components_integer.restype  = ctypes.c_uint64
-
-_ajson_get_components_decimal = lib.ajson_get_components_decimal
-_ajson_get_components_decimal.argtypes = [ctypes.c_void_p]
-_ajson_get_components_decimal.restype  = ctypes.c_uint64
-
-_ajson_get_components_decimal_places = lib.ajson_get_components_decimal_places
-_ajson_get_components_decimal_places.argtypes = [ctypes.c_void_p]
-_ajson_get_components_decimal_places.restype  = ctypes.c_uint64
-
-_ajson_get_components_exponent = lib.ajson_get_components_exponent
-_ajson_get_components_exponent.argtypes = [ctypes.c_void_p]
-_ajson_get_components_exponent.restype  = ctypes.c_uint64
-
-_ajson_error_str = lib.ajson_error_str
-_ajson_error_str.argtypes = [ctypes.c_int]
-_ajson_error_str.restype  = ctypes.c_char_p
-
-_ajson_get_error = lib.ajson_get_error
-_ajson_get_error.argtypes = [ctypes.c_void_p]
-_ajson_get_error.restype  = ctypes.c_int
-
-_ajson_get_error_filename = lib.ajson_get_error_filename
-_ajson_get_error_filename.argtypes = [ctypes.c_void_p]
-_ajson_get_error_filename.restype  = ctypes.c_char_p
-
-_ajson_get_error_function = lib.ajson_get_error_function
-_ajson_get_error_function.argtypes = [ctypes.c_void_p]
-_ajson_get_error_function.restype  = ctypes.c_char_p
-
-_ajson_get_error_lineno = lib.ajson_get_error_lineno
-_ajson_get_error_lineno.argtypes = [ctypes.c_void_p]
-_ajson_get_error_lineno.restype  = ctypes.c_size_t
-
-_ajson_alloc = lib.ajson_alloc
-_ajson_alloc.argtypes = [ctypes.c_int]
-_ajson_alloc.restype  = ctypes.c_void_p
-
-_ajson_free = lib.ajson_free
-_ajson_free.argtypes = [ctypes.c_void_p]
-_ajson_free.restype  = None
-
-FLAG_NONE              = 0
 FLAG_INTEGER           = 1
 FLAG_NUMBER_COMPONENTS = 2
+
+FLAGS_NONE = 0
+FLAGS_ALL  = (FLAG_INTEGER | FLAG_NUMBER_COMPONENTS)
 
 TOK_NEED_DATA    =  0
 TOK_NULL         =  1
@@ -139,7 +49,7 @@ ERROR_PARSER_UNEXPECTED_EOF      = 10
 
 def _error_from_errno():
 	err = get_errno()
-	if err == INVAL:
+	if err == EINVAL:
 		raise ValueError
 	elif err == ENOMEM:
 		raise MemoryError
@@ -171,7 +81,7 @@ class ParserError(Exception):
 class Parser(object):
 	__slots__ = '_parser',
 
-	def __init__(self,flags=FLAG_NONE):
+	def __init__(self,flags=FLAGS_NONE):
 		self._parser = _ajson_alloc(flags)
 		if not self._parser:
 			_error_from_errno()
@@ -251,7 +161,7 @@ class Parser(object):
 	def __iter__(self):
 		return self
 
-def parse_string(s,flags=FLAG_NONE):
+def parse_string(s,flags=FLAGS_NONE):
 	parser = Parser(flags)
 	if type(s) is not bytes:
 		s = s.encode('utf-8')
@@ -264,7 +174,7 @@ def parse_string(s,flags=FLAG_NONE):
 		else:
 			yield item
 
-def parse_stream(stream,flags=FLAG_NONE):
+def parse_stream(stream,flags=FLAGS_NONE):
 	parser = Parser(flags)
 	for item in parser:
 		tok = item[0]
@@ -273,11 +183,6 @@ def parse_stream(stream,flags=FLAG_NONE):
 			parser.feed(data)
 		else:
 			yield item
-
-try:
-	xrange
-except NameError:
-	xrange = range
 
 def _load_values(parser,end_tok):
 	for tok, value in parser:
@@ -292,18 +197,211 @@ def _load_values(parser,end_tok):
 			yield dict((values[i], values[i+1]) for i in xrange(0,len(values),2))
 
 		else:
-			assert tok in VALUE_TOKENS, "not a value token: %d" % tok
+			assert tok in VALUE_TOKENS, "illegal token: %d" % tok
 
 			yield value
 
 def load(stream,use_int=False):
-	parser = parse_stream(stream,FLAG_INTEGER if use_int else FLAG_NONE)
+	parser = parse_stream(stream,FLAG_INTEGER if use_int else FLAGS_NONE)
 	values = list(_load_values(parser, TOK_END))
 	assert len(values) == 1
 	return values[0]
 
 def loads(s,use_int=False):
-	parser = parse_string(s,FLAG_INTEGER if use_int else FLAG_NONE)
+	parser = parse_string(s,FLAG_INTEGER if use_int else FLAGS_NONE)
 	values = list(_load_values(parser, TOK_END))
 	assert len(values) == 1
 	return values[0]
+
+class _Parser(ctypes.Structure):
+	pass
+	
+class _Writer(ctypes.Structure):
+	pass
+
+_ParserPtr = ctypes.POINTER(_Parser)
+_WriterPtr = ctypes.POINTER(_Writer)
+
+# load C functions from shared object
+_lib = ctypes.CDLL("libajson10.so",use_errno=True)
+
+_ajson_alloc = _lib.ajson_alloc
+_ajson_alloc.argtypes = [ctypes.c_int]
+_ajson_alloc.restype  = _ParserPtr
+
+_ajson_free = _lib.ajson_free
+_ajson_free.argtypes = [_ParserPtr]
+_ajson_free.restype  = None
+
+_ajson_feed = _lib.ajson_feed
+_ajson_feed.argtypes = [_ParserPtr, ctypes.c_void_p, ctypes.c_size_t]
+_ajson_feed.restype  = ctypes.c_int
+
+_ajson_next_token = _lib.ajson_next_token
+_ajson_feed.argtypes = [_ParserPtr]
+_ajson_feed.restype  = ctypes.c_int
+
+_ajson_get_flags = _lib.ajson_get_flags
+_ajson_get_flags.argtypes = [_ParserPtr]
+_ajson_get_flags.restype  = ctypes.c_int
+
+_ajson_get_lineno = _lib.ajson_get_lineno
+_ajson_get_lineno.argtypes = [_ParserPtr]
+_ajson_get_lineno.restype  = ctypes.c_size_t
+
+_ajson_get_columnno = _lib.ajson_get_columnno
+_ajson_get_columnno.argtypes = [_ParserPtr]
+_ajson_get_columnno.restype  = ctypes.c_size_t
+
+_ajson_get_boolean = _lib.ajson_get_boolean
+_ajson_get_boolean.argtypes = [_ParserPtr]
+_ajson_get_boolean.restype  = ctypes.c_bool
+
+_ajson_get_number = _lib.ajson_get_number
+_ajson_get_number.argtypes = [_ParserPtr]
+_ajson_get_number.restype  = ctypes.c_double
+
+_ajson_get_integer = _lib.ajson_get_integer
+_ajson_get_integer.argtypes = [_ParserPtr]
+_ajson_get_integer.restype  = ctypes.c_int64
+
+_ajson_get_string = _lib.ajson_get_string
+_ajson_get_string.argtypes = [_ParserPtr]
+_ajson_get_string.restype  = ctypes.c_char_p
+
+_ajson_get_components_positive = _lib.ajson_get_components_positive
+_ajson_get_components_positive.argtypes = [_ParserPtr]
+_ajson_get_components_positive.restype  = ctypes.c_bool
+
+_ajson_get_components_exponent_positive = _lib.ajson_get_components_exponent_positive
+_ajson_get_components_exponent_positive.argtypes = [_ParserPtr]
+_ajson_get_components_exponent_positive.restype  = ctypes.c_bool
+
+_ajson_get_components_integer = _lib.ajson_get_components_integer
+_ajson_get_components_integer.argtypes = [_ParserPtr]
+_ajson_get_components_integer.restype  = ctypes.c_uint64
+
+_ajson_get_components_decimal = _lib.ajson_get_components_decimal
+_ajson_get_components_decimal.argtypes = [_ParserPtr]
+_ajson_get_components_decimal.restype  = ctypes.c_uint64
+
+_ajson_get_components_decimal_places = _lib.ajson_get_components_decimal_places
+_ajson_get_components_decimal_places.argtypes = [_ParserPtr]
+_ajson_get_components_decimal_places.restype  = ctypes.c_uint64
+
+_ajson_get_components_exponent = _lib.ajson_get_components_exponent
+_ajson_get_components_exponent.argtypes = [_ParserPtr]
+_ajson_get_components_exponent.restype  = ctypes.c_uint64
+
+_ajson_error_str = _lib.ajson_error_str
+_ajson_error_str.argtypes = [ctypes.c_int]
+_ajson_error_str.restype  = ctypes.c_char_p
+
+_ajson_get_error = _lib.ajson_get_error
+_ajson_get_error.argtypes = [_ParserPtr]
+_ajson_get_error.restype  = ctypes.c_int
+
+_ajson_get_error_filename = _lib.ajson_get_error_filename
+_ajson_get_error_filename.argtypes = [_ParserPtr]
+_ajson_get_error_filename.restype  = ctypes.c_char_p
+
+_ajson_get_error_function = _lib.ajson_get_error_function
+_ajson_get_error_function.argtypes = [_ParserPtr]
+_ajson_get_error_function.restype  = ctypes.c_char_p
+
+_ajson_get_error_lineno = _lib.ajson_get_error_lineno
+_ajson_get_error_lineno.argtypes = [_ParserPtr]
+_ajson_get_error_lineno.restype  = ctypes.c_size_t
+
+_ajson_writer_alloc = _lib.ajson_writer_alloc
+_ajson_writer_alloc.argtypes = [ctypes.c_char_p]
+_ajson_writer_alloc.restype  = _WriterPtr
+
+_ajson_writer_free = _lib.ajson_writer_free
+_ajson_writer_free.argtypes = [_WriterPtr]
+_ajson_writer_free.restype  = None
+
+_ajson_write_null = _lib.ajson_write_null
+_ajson_write_null.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t]
+_ajson_write_null.restype  = ctypes.c_ssize_t
+
+_ajson_write_boolean = _lib.ajson_write_boolean
+_ajson_write_boolean.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_bool]
+_ajson_write_boolean.restype  = ctypes.c_ssize_t
+
+_ajson_write_number = _lib.ajson_write_number
+_ajson_write_number.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_double]
+_ajson_write_number.restype  = ctypes.c_ssize_t
+
+_ajson_write_integer = _lib.ajson_write_integer
+_ajson_write_integer.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int64]
+_ajson_write_integer.restype  = ctypes.c_ssize_t
+
+_ajson_write_string = _lib.ajson_write_string
+_ajson_write_string.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_char_p]
+_ajson_write_string.restype  = ctypes.c_ssize_t
+
+_ajson_write_begin_array = _lib.ajson_write_begin_array
+_ajson_write_begin_array.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t]
+_ajson_write_begin_array.restype  = ctypes.c_ssize_t
+
+_ajson_write_end_array = _lib.ajson_write_end_array
+_ajson_write_end_array.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t]
+_ajson_write_end_array.restype  = ctypes.c_ssize_t
+
+_ajson_write_begin_object = _lib.ajson_write_begin_object
+_ajson_write_begin_object.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t]
+_ajson_write_begin_object.restype  = ctypes.c_ssize_t
+
+_ajson_write_end_object = _lib.ajson_write_end_object
+_ajson_write_end_object.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t]
+_ajson_write_end_object.restype  = ctypes.c_ssize_t
+
+_ajson_write_continue = _lib.ajson_write_continue
+_ajson_write_continue.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t]
+_ajson_write_continue.restype  = ctypes.c_ssize_t
+
+def _make_write_func(write_func):
+	@wraps(write_func)
+	def _write_func(self,*args):
+		bufsiz = len(self._buffer)
+		size = write_func(self._writer, self._buffer, bufsiz, *args)
+		if size < 0:
+			_error_from_errno()
+
+		while size == bufsiz:
+			yield self._buffer
+
+			size = _ajson_write_continue(self._writer, self._buffer, bufsiz)
+			
+			if size < 0:
+				_error_from_errno()
+
+		if size > 0:
+			yield self._buffer[:size]
+
+	return _write_func
+
+class BufferWriter(object):
+	__slots__ = '_writer', '_buffer'
+
+	def __init__(self,indent=None,size=DEFAULT_BUFFER_SIZE):
+		if size < 1:
+			raise ValueError("size musst be bigger than zero")
+		self._buffer = ctypes.create_string_buffer(size)
+		self._writer = _ajson_writer_alloc(indent)
+		if not self._writer:
+			_error_from_errno()
+
+	write_null         = _make_write_func(_ajson_write_null)
+	write_boolean      = _make_write_func(_ajson_write_boolean)
+	write_number       = _make_write_func(_ajson_write_number)
+	write_integer      = _make_write_func(_ajson_write_integer)
+	write_string       = _make_write_func(_ajson_write_string)
+	write_begin_array  = _make_write_func(_ajson_write_begin_array)
+	write_end_array    = _make_write_func(_ajson_write_end_array)
+	write_begin_object = _make_write_func(_ajson_write_begin_object)
+	write_end_object   = _make_write_func(_ajson_write_end_object)
+
+	def write(self,value):
+		refs = set()
