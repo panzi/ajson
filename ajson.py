@@ -100,7 +100,7 @@ class ParserError(Exception):
 		self.source_filename = source_filename
 		self.source_lineno   = source_lineno
 		self.source_function = source_function
-	
+
 	def __str__(self):
 		return "%d:%d: %s\n%s:%s: %s: error raised here" % (
 			self.lineno, self.columnno, self.message,
@@ -134,7 +134,7 @@ class Parser(object):
 	def feed(self,data):
 		if _ajson_feed(self._parser, data, len(data)) != 0:
 			_error_from_errno()
-	
+
 	def send(self,data):
 		self.feed(data)
 		return self.next()
@@ -169,10 +169,10 @@ class Parser(object):
 
 		elif token == TOK_INTEGER:
 			return token, _ajson_get_integer(ptr)
-			
+
 		elif token == TOK_STRING:
 			return token, _ajson_get_string(ptr).decode('utf-8')
-			
+
 		elif token == TOK_END:
 			raise StopIteration
 
@@ -220,7 +220,7 @@ def _load_values(parser,end_tok):
 	for tok, value in parser:
 		if tok == end_tok:
 			return
-		
+
 		elif tok == TOK_BEGIN_ARRAY:
 			yield list(_load_values(parser,TOK_END_ARRAY))
 
@@ -247,7 +247,7 @@ def loads(s,use_int=False):
 
 class _Parser(ctypes.Structure):
 	pass
-	
+
 class _Writer(ctypes.Structure):
 	pass
 
@@ -400,16 +400,14 @@ def _make_write_func(write_func):
 		buf    = self._buffer
 		bufsiz = len(buf)
 		size   = write_func(ptr, buf, bufsiz, *args)
-		if size < 0:
-			_error_from_errno()
 
 		while size == bufsiz:
 			yield buf.raw
 
 			size = _ajson_write_continue(ptr, buf, bufsiz)
-			
-			if size < 0:
-				_error_from_errno()
+
+		if size < 0:
+			_error_from_errno()
 
 		if size > 0:
 			yield buf[:size]
@@ -514,9 +512,54 @@ class Writer(object):
 
 		return _write(obj)
 
+def _make_file_write_func(write_func):
+	@wraps(write_func)
+	def _write_func(self,*args):
+		fp     = self._file
+		ptr    = self._writer
+		buf    = self._buffer
+		bufsiz = len(buf)
+		size   = write_func(ptr, buf, bufsiz, *args)
+
+		while size == bufsiz:
+			fp.write(buf.raw)
+
+			size = _ajson_write_continue(ptr, buf, bufsiz)
+
+		if size < 0:
+			_error_from_errno()
+
+		if size > 0:
+			fp.write(buf[:size])
+
+	return _write_func
+
+class FileWriter(Writer):
+	__slots__ = '_file',
+
+	def __init__(self,file,indent=None,buffer_size=DEFAULT_BUFFER_SIZE):
+		Writer.__init__(self,indent,buffer_size)
+		self._file = file
+
+	write_null         = _make_write_func(_ajson_write_null)
+	write_boolean      = _make_write_func(_ajson_write_boolean)
+	write_number       = _make_write_func(_ajson_write_number)
+	write_integer      = _make_write_func(_ajson_write_integer)
+	write_begin_array  = _make_write_func(_ajson_write_begin_array)
+	write_end_array    = _make_write_func(_ajson_write_end_array)
+	write_begin_object = _make_write_func(_ajson_write_begin_object)
+	write_end_object   = _make_write_func(_ajson_write_end_object)
+
+	@_make_write_func
+	def write_string(ptr, buffer, size, value):
+		return _ajson_write_string(ptr, buffer, size, value.encode('utf-8'))
+
+	def write(self,obj):
+		for data in Writer.write(self,obj):
+			self._file.write(data)
+
 def dump(obj, stream, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
-	for data in Writer(indent,buffer_size).write(obj):
-		stream.write(data)
+	FileWriter(stream,indent,buffer_size).write(obj)
 
 def dumpb(obj, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
 	return bytes().join(Writer(indent,buffer_size).write(obj))
