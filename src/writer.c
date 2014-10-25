@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <ctype.h>
 #include <math.h>
 
 #define NOT_FIRST 32
@@ -26,6 +27,15 @@ static ssize_t _ajson_write_begin_object(ajson_writer *writer, char *buffer, siz
 static ssize_t _ajson_write_end_object  (ajson_writer *writer, char *buffer, size_t size, size_t index);
 
 int ajson_writer_init(ajson_writer *writer, const char *indent) {
+    if (indent) {
+        for (const char *ptr = indent; *ptr; ++ ptr) {
+            if (!isspace(*ptr)) {
+                errno = EINVAL;
+                return -1;
+            }
+        }
+    }
+
     memset(writer, 0, sizeof(ajson_writer));
     writer->indent     = indent;
     writer->write_func = &_ajson_write_dummy;
