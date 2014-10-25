@@ -541,22 +541,75 @@ class FileWriter(Writer):
 		Writer.__init__(self,indent,buffer_size)
 		self._file = file
 
-	write_null         = _make_write_func(_ajson_write_null)
-	write_boolean      = _make_write_func(_ajson_write_boolean)
-	write_number       = _make_write_func(_ajson_write_number)
-	write_integer      = _make_write_func(_ajson_write_integer)
-	write_begin_array  = _make_write_func(_ajson_write_begin_array)
-	write_end_array    = _make_write_func(_ajson_write_end_array)
-	write_begin_object = _make_write_func(_ajson_write_begin_object)
-	write_end_object   = _make_write_func(_ajson_write_end_object)
+	write_null         = _make_file_write_func(_ajson_write_null)
+	write_boolean      = _make_file_write_func(_ajson_write_boolean)
+	write_number       = _make_file_write_func(_ajson_write_number)
+	write_integer      = _make_file_write_func(_ajson_write_integer)
+	write_begin_array  = _make_file_write_func(_ajson_write_begin_array)
+	write_end_array    = _make_file_write_func(_ajson_write_end_array)
+	write_begin_object = _make_file_write_func(_ajson_write_begin_object)
+	write_end_object   = _make_file_write_func(_ajson_write_end_object)
 
-	@_make_write_func
+	@_make_file_write_func
 	def write_string(ptr, buffer, size, value):
 		return _ajson_write_string(ptr, buffer, size, value.encode('utf-8'))
 
 	def write(self,obj):
-		for data in Writer.write(self,obj):
-			self._file.write(data)
+		refs = set()
+
+		def _write(obj):
+			if obj is None:
+				self.write_null()
+
+			elif isinstance(obj, _Strings):
+				self.write_string(obj)
+
+			elif isinstance(obj, float):
+				self.write_number(obj)
+
+			elif isinstance(obj, _Ints):
+				if obj < -0x8000000000000000 or obj > 0x7fffffffffffffff:
+					self.write_number(obj)
+				else:
+					self.write_integer(obj)
+
+			elif isinstance(obj, dict):
+				ref = id(obj)
+				if ref in refs:
+					raise ValueError("cannot serialize recursive data structure")
+
+				refs.add(ref)
+
+				self.write_begin_object()
+
+				for key in obj:
+					self.write_string(key)
+					_write(obj[key])
+
+				self.write_end_object()
+
+				refs.remove(ref)
+
+			elif isinstance(obj, _Lists) or hasattr(obj, '__iter__'):
+				ref = id(obj)
+				if ref in refs:
+					raise ValueError("cannot serialize recursive data structure")
+
+				refs.add(ref)
+
+				self.write_begin_array()
+
+				for item in obj:
+					_write(item)
+
+				self.write_end_array()
+
+				refs.remove(ref)
+
+			else:
+				raise TypeError("object has unhandeled type: %r" % obj)
+
+		return _write(obj)
 
 def dump(obj, stream, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
 	FileWriter(stream,indent,buffer_size).write(obj)
