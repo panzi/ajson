@@ -157,7 +157,7 @@ ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size
 }
 
 ssize_t ajson_write_end_object(ajson_writer *writer, void *buffer, size_t size) {
-    if (size == 0 || size > SSIZE_MAX || (writer->stack[writer->stack_current] | NOT_FIRST) == 'o') {
+    if (size == 0 || size > SSIZE_MAX || writer->stack[writer->stack_current] == 'k') {
         errno = EINVAL;
         return -1;
     }
@@ -341,7 +341,7 @@ ssize_t _ajson_write_number(ajson_writer *writer, char *buffer, size_t size, siz
 
         if (nfree >= sizeof(writer->value.number.buffer)) {
             // this code path saves one memcpy
-            int count = snprintf(buffer, nfree, "%.16g", writer->value.number.value);
+            int count = snprintf(buffer + index, nfree, "%.16g", writer->value.number.value);
             if (count < 0) {
                 RAISE_ERROR();
             }
