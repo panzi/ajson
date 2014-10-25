@@ -67,7 +67,7 @@ const char* ajson_error_str(enum ajson_error error) {
 }
 
 int ajson_init(ajson_parser *parser, int flags) {
-    if (flags & ~AJSON_FLAG_INTEGER) {
+    if (flags & ~AJSON_FLAGS_ALL) {
         errno = EINVAL;
         return -1;
     }

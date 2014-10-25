@@ -13,9 +13,11 @@ extern "C" {
 
 #define AJSON_STACK_SIZE 64
 
-#define AJSON_FLAG_NONE              0
 #define AJSON_FLAG_INTEGER           1 // parse numbers with no "." as int64_t
 #define AJSON_FLAG_NUMBER_COMPONENTS 2 // don't combine numbers into doubles but return their integer, decimal, and exponent components
+
+#define AJSON_FLAGS_NONE 0
+#define AJSON_FLAGS_ALL  (AJSON_FLAG_INTEGER | AJSON_FLAG_NUMBER_COMPONENTS)
 
 enum ajson_token {
     AJSON_TOK_NEED_DATA,
