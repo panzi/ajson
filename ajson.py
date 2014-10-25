@@ -14,6 +14,36 @@ try:
 except NameError:
 	xrange = range
 
+_Strings = {str, bytes, memoryview}
+
+try:
+	unicode
+except NameError:
+	pass
+else:
+	_Strings.add(unicode)
+
+try:
+	buffer
+except NameError:
+	pass
+else:
+	_Strings.add(buffer)
+
+_Strings = tuple(_Strings)
+
+_Ints = {int}
+
+try:
+	long
+except NameError:
+	pass
+else:
+	_Ints.add(long)
+
+_Ints = tuple(_Ints)
+_Lists = (list, tuple)
+
 FLAG_INTEGER           = 1
 FLAG_NUMBER_COMPONENTS = 2
 
@@ -157,6 +187,8 @@ class Parser(object):
 
 		else:
 			raise ValueError("unkown token type: %d" % token)
+
+	__next__ = next
 
 	def __iter__(self):
 		return self
@@ -364,44 +396,130 @@ _ajson_write_continue.restype  = ctypes.c_ssize_t
 def _make_write_func(write_func):
 	@wraps(write_func)
 	def _write_func(self,*args):
-		bufsiz = len(self._buffer)
-		size = write_func(self._writer, self._buffer, bufsiz, *args)
+		ptr    = self._writer
+		buf    = self._buffer
+		bufsiz = len(buf)
+		size   = write_func(ptr, buf, bufsiz, *args)
 		if size < 0:
 			_error_from_errno()
 
 		while size == bufsiz:
-			yield self._buffer
+			yield buf.raw
 
-			size = _ajson_write_continue(self._writer, self._buffer, bufsiz)
+			size = _ajson_write_continue(ptr, buf, bufsiz)
 			
 			if size < 0:
 				_error_from_errno()
 
 		if size > 0:
-			yield self._buffer[:size]
+			yield buf[:size]
 
 	return _write_func
 
-class BufferWriter(object):
+class Writer(object):
 	__slots__ = '_writer', '_buffer'
 
-	def __init__(self,indent=None,size=DEFAULT_BUFFER_SIZE):
-		if size < 1:
+	def __init__(self,indent=None,buffer_size=DEFAULT_BUFFER_SIZE):
+		if buffer_size < 1:
 			raise ValueError("size musst be bigger than zero")
-		self._buffer = ctypes.create_string_buffer(size)
-		self._writer = _ajson_writer_alloc(indent)
+		self._buffer = ctypes.create_string_buffer(buffer_size)
+		self._writer = _ajson_writer_alloc(None if indent is None else indent.encode('utf-8'))
 		if not self._writer:
 			_error_from_errno()
+
+	@property
+	def buffer_size(self):
+		return len(self._buffer)
 
 	write_null         = _make_write_func(_ajson_write_null)
 	write_boolean      = _make_write_func(_ajson_write_boolean)
 	write_number       = _make_write_func(_ajson_write_number)
 	write_integer      = _make_write_func(_ajson_write_integer)
-	write_string       = _make_write_func(_ajson_write_string)
 	write_begin_array  = _make_write_func(_ajson_write_begin_array)
 	write_end_array    = _make_write_func(_ajson_write_end_array)
 	write_begin_object = _make_write_func(_ajson_write_begin_object)
 	write_end_object   = _make_write_func(_ajson_write_end_object)
 
-	def write(self,value):
+	@_make_write_func
+	def write_string(ptr, buffer, size, value):
+		return _ajson_write_string(ptr, buffer, size, value.encode('utf-8'))
+
+	def write(self,obj):
 		refs = set()
+
+		def _write(obj):
+			if obj is None:
+				for data in self.write_null():
+					yield data
+
+			elif isinstance(obj, _Strings):
+				for data in self.write_string(obj):
+					yield data
+
+			elif isinstance(obj, float):
+				for data in self.write_number(obj):
+					yield data
+
+			elif isinstance(obj, _Ints):
+				if obj < -0x8000000000000000 or obj > 0x7fffffffffffffff:
+					for data in self.write_number(obj):
+						yield data
+				else:
+					for data in self.write_integer(obj):
+						yield data
+
+			elif isinstance(obj, dict):
+				ref = id(obj)
+				if ref in refs:
+					raise ValueError("cannot serialize recursive data structure")
+
+				refs.add(ref)
+
+				for data in self.write_begin_object():
+					yield data
+
+				for key in obj:
+					for data in self.write_string(key):
+						yield data
+
+					for data in _write(obj[key]):
+						yield data
+
+				for data in self.write_end_object():
+					yield data
+
+				refs.remove(ref)
+
+			elif isinstance(obj, _Lists) or hasattr(obj, '__iter__'):
+				ref = id(obj)
+				if ref in refs:
+					raise ValueError("cannot serialize recursive data structure")
+
+				refs.add(ref)
+
+				for data in self.write_begin_array():
+					yield data
+
+				for item in obj:
+					for data in _write(item):
+						yield data
+
+				for data in self.write_end_array():
+					yield data
+
+				refs.remove(ref)
+
+			else:
+				raise TypeError("object has unhandeled type: %r" % obj)
+
+		return _write(obj)
+
+def dump(obj, stream, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
+	for data in Writer(indent,buffer_size).write(obj):
+		stream.write(data)
+
+def dumpb(obj, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
+	return bytes().join(Writer(indent,buffer_size).write(obj))
+
+def dumps(obj, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
+	return dumpb(obj, indent, buffer_size).decode('utf-8')
