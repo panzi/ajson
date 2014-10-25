@@ -551,6 +551,10 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     READ_NEXT_OR_EOF();
                 } while (!AT_EOF() && isdigit(CURR_CH()));
             }
+            else if (parser->value.components.integer == 0 && !parser->value.components.positive) {
+                // -0 is not an integer value
+                parser->value.components.isinteger = false;
+            }
 
             if (!AT_EOF() && !ispunct(CURR_CH()) && !isspace(CURR_CH())) {
                 RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED);
