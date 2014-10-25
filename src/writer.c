@@ -112,7 +112,7 @@ ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int
 }
 
 ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, const char* value) {
-    if (size == 0 || size > SSIZE_MAX) {
+    if (size == 0 || size > SSIZE_MAX || !value) {
         errno = EINVAL;
         return -1;
     }
