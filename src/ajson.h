@@ -253,8 +253,6 @@ AJSON_EXPORT ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, si
 AJSON_EXPORT int         ajson_writer_get_flags (ajson_writer *writer);
 AJSON_EXPORT const char *ajson_writer_get_indent(ajson_writer *writer);
 
-// buffer musst be at least 4 bytes big
-AJSON_EXPORT int ajson_encode_utf8(uint32_t codepoint, char buffer[]);
 AJSON_EXPORT int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint);
 
 #ifdef __cplusplus

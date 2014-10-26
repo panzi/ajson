@@ -134,37 +134,6 @@ void ajson_free(ajson_parser *parser) {
     }
 }
 
-int ajson_encode_utf8(uint32_t codepoint, char buffer[]) {
-    if (codepoint < 0x80) {
-        // 0xxxxxxx
-        buffer[0] =  codepoint;
-        return 1;
-    }
-    else if (codepoint <= 0x7FF) {
-        // 110xxxxx 10xxxxxx
-        buffer[0] = (codepoint >> 6) + 0xC0;
-        buffer[1] = (codepoint & 0x3F) + 0x80;
-        return 2;
-    }
-    else if (codepoint <= 0xFFFF) {
-        // 1110xxxx 10xxxxxx 10xxxxxx
-        buffer[0] = (codepoint >> 12) + 0xE0;
-        buffer[1] = ((codepoint >> 6) & 0x3F) + 0x80;
-        buffer[2] = (codepoint & 0x3F) + 0x80;
-        return 3;
-    }
-    else if (codepoint <= 0x10FFFF) {
-        // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-        buffer[0] = (codepoint >> 18) + 0xF0;
-        buffer[1] = ((codepoint >> 12) & 0x3F) + 0x80;
-        buffer[2] = ((codepoint >> 6) & 0x3F) + 0x80;
-        buffer[3] = (codepoint & 0x3F) + 0x80;
-        return 4;
-    }
-    errno = EINVAL;
-    return -1;
-}
-
 int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint) {
     if (size == 0) {
         errno = EINVAL;
