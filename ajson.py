@@ -200,11 +200,9 @@ class Parser(object):
 	def __iter__(self):
 		return self
 
-def parse_string(s,flags=FLAGS_NONE):
+def parse_bytes(b,flags=FLAGS_NONE):
 	parser = Parser(flags)
-	if type(s) is not bytes:
-		s = s.encode('utf-8')
-	parser.feed(s)
+	parser.feed(b)
 	for item in parser:
 		tok = item[0]
 		if tok == TOK_NEED_DATA:
@@ -212,6 +210,9 @@ def parse_string(s,flags=FLAGS_NONE):
 			parser.feed(bytes())
 		else:
 			yield item
+
+def parse_string(s,flags=FLAGS_NONE):
+	return parse_bytes(s.encode('utf-8'),flags)
 
 def parse_stream(stream,flags=FLAGS_NONE):
 	parser = Parser(flags)
@@ -248,6 +249,12 @@ def load(stream,use_int=False):
 
 def loads(s,use_int=False):
 	parser = parse_string(s,FLAG_INTEGER if use_int else FLAGS_NONE)
+	values = list(_load_values(parser, TOK_END))
+	assert len(values) == 1
+	return values[0]
+
+def loadb(b,use_int=False):
+	parser = parse_bytes(b,FLAG_INTEGER if use_int else FLAGS_NONE)
 	values = list(_load_values(parser, TOK_END))
 	assert len(values) == 1
 	return values[0]
