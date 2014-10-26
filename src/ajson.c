@@ -233,7 +233,7 @@ int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint) {
 
         unit2 = buffer[1];
         unit3 = buffer[2];
-        unit4 = buffer[4];
+        unit4 = buffer[3];
 
         if ((unit2 & 0xC0) != 0x80 || (unit1 == 0xF0 && unit2 < 0x90) || (unit1 == 0xF4 && unit2 >= 0x90)) {
             errno = EILSEQ;
