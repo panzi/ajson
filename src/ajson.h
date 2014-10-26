@@ -7,17 +7,21 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "config.h"
+#include "export.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define AJSON_STACK_SIZE 64
+#define AJSON_STACK_SIZE 64 // initial stack size
 
 #define AJSON_FLAG_INTEGER           1 // parse numbers with no "." as int64_t
 #define AJSON_FLAG_NUMBER_COMPONENTS 2 // don't combine numbers into doubles but return their integer, decimal, and exponent components
+#define AJSON_FLAG_NUMBER_AS_STRING  4 // don't convert number into double but instead return it as a string
 
 #define AJSON_FLAGS_NONE 0
-#define AJSON_FLAGS_ALL  (AJSON_FLAG_INTEGER | AJSON_FLAG_NUMBER_COMPONENTS)
+#define AJSON_FLAGS_ALL  (AJSON_FLAG_INTEGER | AJSON_FLAG_NUMBER_COMPONENTS | AJSON_FLAG_NUMBER_AS_STRING)
 
 #define AJSON_WRITER_FLAG_ASCII 1 // writer ASCII compatible output (use \u#### escapes)
 
@@ -102,37 +106,42 @@ struct ajson_parser_s {
 
 typedef struct ajson_parser_s ajson_parser;
 
-int              ajson_init      (ajson_parser *parser, int flags, enum ajson_encoding encoding);
-void             ajson_destroy   (ajson_parser *parser);
-int              ajson_feed      (ajson_parser *parser, const void *buffer, size_t size);
-enum ajson_token ajson_next_token(ajson_parser *parser);
+AJSON_EXPORT const char  *ajson_version();
+AJSON_EXPORT unsigned int ajson_version_major();
+AJSON_EXPORT unsigned int ajson_version_minor();
+AJSON_EXPORT unsigned int ajson_version_patch();
 
-ajson_parser *ajson_alloc(int flags, enum ajson_encoding encoding);
-void          ajson_free (ajson_parser *parser);
+AJSON_EXPORT int              ajson_init      (ajson_parser *parser, int flags, enum ajson_encoding encoding);
+AJSON_EXPORT void             ajson_destroy   (ajson_parser *parser);
+AJSON_EXPORT int              ajson_feed      (ajson_parser *parser, const void *buffer, size_t size);
+AJSON_EXPORT enum ajson_token ajson_next_token(ajson_parser *parser);
 
-int ajson_get_flags(const ajson_parser *parser);
+AJSON_EXPORT ajson_parser *ajson_alloc(int flags, enum ajson_encoding encoding);
+AJSON_EXPORT void          ajson_free (ajson_parser *parser);
 
-size_t ajson_get_lineno  (const ajson_parser *parser);
-size_t ajson_get_columnno(const ajson_parser *parser);
+AJSON_EXPORT int ajson_get_flags(const ajson_parser *parser);
 
-bool        ajson_get_boolean(const ajson_parser *parser);
-double      ajson_get_number (const ajson_parser *parser);
-int64_t     ajson_get_integer(const ajson_parser *parser);
-const char* ajson_get_string (const ajson_parser *parser);
+AJSON_EXPORT size_t ajson_get_lineno  (const ajson_parser *parser);
+AJSON_EXPORT size_t ajson_get_columnno(const ajson_parser *parser);
 
-bool     ajson_get_components_positive         (const ajson_parser *parser);
-bool     ajson_get_components_exponent_positive(const ajson_parser *parser);
-uint64_t ajson_get_components_integer          (const ajson_parser *parser);
-uint64_t ajson_get_components_decimal          (const ajson_parser *parser);
-uint64_t ajson_get_components_decimal_places   (const ajson_parser *parser);
-uint64_t ajson_get_components_exponent         (const ajson_parser *parser);
+AJSON_EXPORT bool        ajson_get_boolean(const ajson_parser *parser);
+AJSON_EXPORT double      ajson_get_number (const ajson_parser *parser);
+AJSON_EXPORT int64_t     ajson_get_integer(const ajson_parser *parser);
+AJSON_EXPORT const char* ajson_get_string (const ajson_parser *parser);
 
-enum ajson_error ajson_get_error         (const ajson_parser *parser);
-const char*      ajson_get_error_filename(const ajson_parser *parser);
-const char*      ajson_get_error_function(const ajson_parser *parser);
-size_t           ajson_get_error_lineno  (const ajson_parser *parser);
+AJSON_EXPORT bool     ajson_get_components_positive         (const ajson_parser *parser);
+AJSON_EXPORT bool     ajson_get_components_exponent_positive(const ajson_parser *parser);
+AJSON_EXPORT uint64_t ajson_get_components_integer          (const ajson_parser *parser);
+AJSON_EXPORT uint64_t ajson_get_components_decimal          (const ajson_parser *parser);
+AJSON_EXPORT uint64_t ajson_get_components_decimal_places   (const ajson_parser *parser);
+AJSON_EXPORT uint64_t ajson_get_components_exponent         (const ajson_parser *parser);
 
-const char* ajson_error_str(enum ajson_error error);
+AJSON_EXPORT enum ajson_error ajson_get_error         (const ajson_parser *parser);
+AJSON_EXPORT const char*      ajson_get_error_filename(const ajson_parser *parser);
+AJSON_EXPORT const char*      ajson_get_error_function(const ajson_parser *parser);
+AJSON_EXPORT size_t           ajson_get_error_lineno  (const ajson_parser *parser);
+
+AJSON_EXPORT const char* ajson_error_str(enum ajson_error error);
 
 typedef int (*ajson_null_func)        (void *ctx);
 typedef int (*ajson_boolean_func)     (void *ctx, bool        value);
@@ -166,10 +175,10 @@ struct ajson_cb_parser_s {
 
 typedef struct ajson_cb_parser_s ajson_cb_parser;
 
-int ajson_cb_parse_fd  (ajson_cb_parser *parser, int fd);
-int ajson_cb_parse_file(ajson_cb_parser *parser, FILE* stream);
-int ajson_cb_parse_buf (ajson_cb_parser *parser, const void* buffer, size_t size);
-int ajson_cb_dispatch  (ajson_cb_parser *parser);
+AJSON_EXPORT int ajson_cb_parse_fd  (ajson_cb_parser *parser, int fd);
+AJSON_EXPORT int ajson_cb_parse_file(ajson_cb_parser *parser, FILE* stream);
+AJSON_EXPORT int ajson_cb_parse_buf (ajson_cb_parser *parser, const void* buffer, size_t size);
+AJSON_EXPORT int ajson_cb_dispatch  (ajson_cb_parser *parser);
 
 struct ajson_writer_s;
 
@@ -219,34 +228,34 @@ struct ajson_writer_s {
 
 typedef struct ajson_writer_s ajson_writer;
 
-int  ajson_writer_init   (ajson_writer *writer, int flags, const char *indent);
-void ajson_writer_destroy(ajson_writer *writer);
+AJSON_EXPORT int  ajson_writer_init   (ajson_writer *writer, int flags, const char *indent);
+AJSON_EXPORT void ajson_writer_destroy(ajson_writer *writer);
 
-ajson_writer *ajson_writer_alloc(int flags, const char *indent);
-void          ajson_writer_free (ajson_writer *writer);
+AJSON_EXPORT ajson_writer *ajson_writer_alloc(int flags, const char *indent);
+AJSON_EXPORT void          ajson_writer_free (ajson_writer *writer);
 
-ssize_t ajson_write_null   (ajson_writer *writer, void *buffer, size_t size);
-ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool        value);
-ssize_t ajson_write_number (ajson_writer *writer, void *buffer, size_t size, double      value);
-ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int64_t     value);
-ssize_t ajson_write_string (ajson_writer *writer, void *buffer, size_t size, const char* value, enum ajson_encoding encoding);
-ssize_t ajson_write_string_latin1(ajson_writer *writer, void *buffer, size_t size, const char* value);
-ssize_t ajson_write_string_utf8  (ajson_writer *writer, void *buffer, size_t size, const char* value);
+AJSON_EXPORT ssize_t ajson_write_null   (ajson_writer *writer, void *buffer, size_t size);
+AJSON_EXPORT ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool        value);
+AJSON_EXPORT ssize_t ajson_write_number (ajson_writer *writer, void *buffer, size_t size, double      value);
+AJSON_EXPORT ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int64_t     value);
+AJSON_EXPORT ssize_t ajson_write_string (ajson_writer *writer, void *buffer, size_t size, const char* value, enum ajson_encoding encoding);
+AJSON_EXPORT ssize_t ajson_write_string_latin1(ajson_writer *writer, void *buffer, size_t size, const char* value);
+AJSON_EXPORT ssize_t ajson_write_string_utf8  (ajson_writer *writer, void *buffer, size_t size, const char* value);
 
-ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size);
-ssize_t ajson_write_end_array  (ajson_writer *writer, void *buffer, size_t size);
+AJSON_EXPORT ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size);
+AJSON_EXPORT ssize_t ajson_write_end_array  (ajson_writer *writer, void *buffer, size_t size);
 
-ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size);
-ssize_t ajson_write_end_object  (ajson_writer *writer, void *buffer, size_t size);
+AJSON_EXPORT ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size);
+AJSON_EXPORT ssize_t ajson_write_end_object  (ajson_writer *writer, void *buffer, size_t size);
 
-ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, size_t size);
+AJSON_EXPORT ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, size_t size);
 
-int         ajson_writer_get_flags (ajson_writer *writer);
-const char *ajson_writer_get_indent(ajson_writer *writer);
+AJSON_EXPORT int         ajson_writer_get_flags (ajson_writer *writer);
+AJSON_EXPORT const char *ajson_writer_get_indent(ajson_writer *writer);
 
 // buffer musst be at least 4 bytes big
-int ajson_encode_utf8(uint32_t codepoint, char buffer[]);
-int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint);
+AJSON_EXPORT int ajson_encode_utf8(uint32_t codepoint, char buffer[]);
+AJSON_EXPORT int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint);
 
 #ifdef __cplusplus
 }

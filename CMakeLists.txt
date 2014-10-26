@@ -11,7 +11,7 @@ set(AJSON_MAJOR_VERSION 1)
 set(AJSON_MINOR_VERSION 0)
 set(AJSON_PATCH_VERSION 0)
 
-set(AJSON_NAME ajson${AJSON_MAJOR_VERSION}${AJSON_MINOR_VERSION})
+set(AJSON_NAME ajson)
 set(AJSON_VERSION ${AJSON_MAJOR_VERSION}.${AJSON_MINOR_VERSION}.${AJSON_PATCH_VERSION})
 
 if(BUILD_SHARED_LIBS)
@@ -25,16 +25,8 @@ if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -std=gnu99")
-
-	if(NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
-	endif()
-
-	if(NOT(CMAKE_COMPILER_IS_MINGW64))
-		# can't be pedantic for mingw64 because of format strings
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic")
-	endif()
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -std=gnu99 -pedantic -fvisibility=hidden")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O3")
 endif()
 
 if(NOT WIN32)

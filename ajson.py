@@ -9,6 +9,30 @@ from errno     import EINVAL, ENOMEM
 from os        import strerror
 from io        import DEFAULT_BUFFER_SIZE
 
+__all__ = (
+	'ERROR_EMPTY_SATCK', 'ERROR_JUMP', 'ERROR_MEMORY', 'ERROR_NONE', 'ERROR_PARSER',
+	'ERROR_PARSER_EXPECTED_ARRAY_END', 'ERROR_PARSER_EXPECTED_OBJECT_END',
+	'ERROR_PARSER_RANGE', 'ERROR_PARSER_UNEXPECTED', 'ERROR_PARSER_UNEXPECTED_EOF',
+	'ERROR_PARSER_UNICODE',
+
+	'FLAGS_ALL', 'FLAGS_NONE', 'FLAG_INTEGER', 'FLAG_NUMBER_AS_STRING',
+	'FLAG_NUMBER_COMPONENTS',
+
+	'TOK_BEGIN_ARRAY', 'TOK_BEGIN_OBJECT', 'TOK_BOOLEAN', 'TOK_END', 'TOK_END_ARRAY',
+	'TOK_END_OBJECT', 'TOK_ERROR', 'TOK_INTEGER', 'TOK_NEED_DATA', 'TOK_NULL', 'TOK_NUMBER',
+	'TOK_STRING',
+
+	'VALUE_TOKENS',
+	'VERSION',
+
+	'WRITER_FALG_ASCII', 'WRITER_FLAGS_ALL', 'WRITER_FLAGS_NONE',
+
+	'FileWriter', 'Parser', 'ParserError', 'Writer',
+
+	'dump', 'dumpb', 'dumps', 'load', 'loadb', 'loads', 'parse_bytes', 'parse_stream',
+	'parse_string'
+)
+
 try:
 	xrange
 except NameError:
@@ -46,9 +70,10 @@ _Lists = (list, tuple)
 
 FLAG_INTEGER           = 1
 FLAG_NUMBER_COMPONENTS = 2
+FLAG_NUMBER_AS_STRING  = 4
 
 FLAGS_NONE = 0
-FLAGS_ALL  = FLAG_INTEGER | FLAG_NUMBER_COMPONENTS
+FLAGS_ALL  = FLAG_INTEGER | FLAG_NUMBER_COMPONENTS | FLAG_NUMBER_AS_STRING
 
 WRITER_FALG_ASCII = 1
 
@@ -162,7 +187,8 @@ class Parser(object):
 			return token, _ajson_get_boolean(ptr)
 
 		elif token == TOK_NUMBER:
-			if _ajson_get_flags(ptr) & FLAG_NUMBER_COMPONENTS:
+			flags = _ajson_get_flags(ptr)
+			if flags & FLAG_NUMBER_COMPONENTS:
 				return token, (
 						_ajson_get_components_positive(ptr),
 						_ajson_get_components_integer(ptr),
@@ -171,6 +197,8 @@ class Parser(object):
 						_ajson_get_components_exponent_positive(ptr),
 						_ajson_get_components_exponent(ptr)
 					)
+			elif flags & FLAG_NUMBER_AS_STRING:
+				return token, _ajson_get_string(ptr)
 			else:
 				return token, _ajson_get_number(ptr)
 
@@ -269,7 +297,19 @@ _ParserPtr = ctypes.POINTER(_Parser)
 _WriterPtr = ctypes.POINTER(_Writer)
 
 # load C functions from shared object
-_lib = ctypes.CDLL("libajson10.so",use_errno=True)
+_lib = ctypes.CDLL("libajson.so",use_errno=True)
+
+_ajson_version_major = _lib.ajson_version_major
+_ajson_version_major.argtypes = []
+_ajson_version_major.restype  = ctypes.c_uint
+
+_ajson_version_minor = _lib.ajson_version_minor
+_ajson_version_minor.argtypes = []
+_ajson_version_minor.restype  = ctypes.c_uint
+
+_ajson_version_patch = _lib.ajson_version_patch
+_ajson_version_patch.argtypes = []
+_ajson_version_patch.restype  = ctypes.c_uint
 
 _ajson_alloc = _lib.ajson_alloc
 _ajson_alloc.argtypes = [ctypes.c_int]
@@ -676,3 +716,5 @@ def dumpb(obj, ensure_ascii=True, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
 
 def dumps(obj, ensure_ascii=True, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
 	return dumpb(obj, ensure_ascii, indent, buffer_size).decode('utf-8')
+
+VERSION = (_ajson_version_major(), _ajson_version_minor(), _ajson_version_patch())

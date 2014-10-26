@@ -4,6 +4,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+const char  *ajson_version()       { return AJSON_VERSION_STRING; }
+unsigned int ajson_version_major() { return AJSON_VERSION_MAJOR; }
+unsigned int ajson_version_minor() { return AJSON_VERSION_MINOR; }
+unsigned int ajson_version_patch() { return AJSON_VERSION_PATCH; }
+
 int ajson_get_flags(const ajson_parser *parser) { return parser->flags; }
 
 size_t ajson_get_lineno  (const ajson_parser *parser) { return parser->lineno;   }
@@ -67,7 +72,7 @@ const char* ajson_error_str(enum ajson_error error) {
 }
 
 int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding) {
-    if (flags & ~AJSON_FLAGS_ALL) {
+    if (flags & ~AJSON_FLAGS_ALL || (flags & AJSON_FLAG_NUMBER_AS_STRING && flags & (AJSON_FLAG_INTEGER | AJSON_FLAG_NUMBER_COMPONENTS))) {
         errno = EINVAL;
         return -1;
     }
