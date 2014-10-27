@@ -476,7 +476,7 @@ def _make_write_func(write_func):
 
 	return _write_func
 
-class Writer(object):
+class WriterBase(object):
 	__slots__ = '_writer', '_indent', '_buffer'
 
 	def __init__(self,flags=WRITER_FLAGS_NONE,indent=None,buffer_size=DEFAULT_BUFFER_SIZE):
@@ -503,6 +503,9 @@ class Writer(object):
 	@property
 	def flags(self):
 		return _ajson_writer_get_flags(self._writer)
+
+class Writer(WriterBase):
+	__slots__ = ()
 
 	null         = _make_write_func(_ajson_write_null)
 	boolean      = _make_write_func(_ajson_write_boolean)
@@ -608,34 +611,12 @@ def _make_file_write_func(write_func):
 
 	return _write_func
 
-class FileWriter(object):
-	__slots__ = '_writer','_indent','_buffer','_file'
+class FileWriter(WriterBase):
+	__slots__ = '_file',
 
 	def __init__(self,file,flags=WRITER_FLAGS_NONE,indent=None,buffer_size=DEFAULT_BUFFER_SIZE):
-		if buffer_size < 1:
-			raise ValueError("buffer_size musst be bigger than zero")
-		self._file   = file
-		# keep reference to indent so it won't get GCed
-		self._indent = None if indent is None else indent.encode('utf-8')
-		self._buffer = ctypes.create_string_buffer(buffer_size)
-		self._writer = _ajson_writer_alloc(flags,self._indent)
-		if not self._writer:
-			_error_from_errno()
-
-	def __del__(self):
-		_ajson_writer_free(self._writer)
-
-	@property
-	def buffer_size(self):
-		return len(self._buffer)
-
-	@property
-	def indent(self):
-		return self._indent.decode('utf-8')
-
-	@property
-	def flags(self):
-		return _ajson_writer_get_flags(self._writer)
+		WriterBase.__init__(self,flags,indent,buffer_size)
+		self._file = file
 
 	null         = _make_file_write_func(_ajson_write_null)
 	boolean      = _make_file_write_func(_ajson_write_boolean)
