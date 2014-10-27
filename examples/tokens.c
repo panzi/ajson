@@ -24,7 +24,7 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
 
-    char buf[2];
+    char buf[BUFSIZ];
 
     for (;;) {
         size_t size = fgets(buf, sizeof(buf), fp) ? strlen(buf) : 0;

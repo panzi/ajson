@@ -33,7 +33,7 @@ int main(int argc, const char *argv[]) {
     }
 
     char inbuf[BUFSIZ];
-    char outbuf[2];
+    char outbuf[BUFSIZ];
 
     for (;;) {
         size_t size = fgets(inbuf, sizeof(inbuf), fp) ? strlen(inbuf) : 0;
