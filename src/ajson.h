@@ -14,6 +14,8 @@
 extern "C" {
 #endif
 
+#define AJSON_VERSION_CHECK() (ajson_version_major() == AJSON_VERSION_MAJOR && ajson_version_minor() >= AJSON_VERSION_MINOR)
+
 #define AJSON_STACK_SIZE 64 // initial stack size
 
 #define AJSON_FLAG_INTEGER           1 // parse numbers with no "." as int64_t

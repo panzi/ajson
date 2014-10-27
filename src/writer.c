@@ -229,12 +229,8 @@ int ajson_writer_pop(ajson_writer *writer) {
     return writer->stack[writer->stack_current --];
 }
 
-#ifdef __GNUC__
-#   define AJSON_USE_GNUC_ADDRESS_FROM_LABEL
-#endif
-
 #ifdef AJSON_USE_GNUC_ADDRESS_FROM_LABEL
-#pragma GCC diagnostic ignored "-pedantic"
+#   pragma GCC diagnostic ignored "-pedantic"
     // http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
     // use offsets instead of absolute addresses to reduce the number of
     // dynamic relocations for code in shared libraries
@@ -637,3 +633,6 @@ ssize_t _ajson_write_end_object(ajson_writer *writer, char *buffer, size_t size,
 
     END_DISPATCH;
 }
+#ifdef AJSON_USE_GNUC_ADDRESS_FROM_LABEL
+#   pragma GCC diagnostic pop
+#endif

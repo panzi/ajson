@@ -2,10 +2,23 @@ cmake_minimum_required(VERSION 2.8.8)
 
 project(ajson)
 
+include(CheckCSourceCompiles)
+
+check_c_source_compiles("
+int main() {
+	void *ptr = &&label;
+	goto *ptr;
+label:
+	return 0;
+}
+" AJSON_USE_GNUC_ADDRESS_FROM_LABEL_INIT)
+
+option(AJSON_USE_GNUC_ADDRESS_FROM_LABEL
+	"Use GNUC extension to use label addresses for improved performance"
+	${AJSON_USE_GNUC_ADDRESS_FROM_LABEL_INIT})
+option(BUILD_SHARED_LIBS "Build as shared library" ON)
 option(BUILD_EXAMPLES "Build examples" OFF)
-option(BUILD_SHARED_LIBS "Build Shared Libraries" ON)
-#option(BUILD_DOCS "Build doxygen documentation" OFF)
-option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_TESTS "Build tests (TODO)" OFF)
 
 set(AJSON_MAJOR_VERSION 1)
 set(AJSON_MINOR_VERSION 0)
@@ -94,21 +107,6 @@ if(BUILD_TESTS)
 
 	add_subdirectory(test)
 endif()
-
-#if(BUILD_DOCS)
-#	find_package(Doxygen)
-#	if(NOT DOXYGEN_FOUND)
-#		message(FATAL_ERROR
-#			"Doxygen is needed to build the documentation.")
-#	endif()
-#
-#	configure_file(Doxyfile.in 
-#		"${PROJECT_BINARY_DIR}/Doxyfile" @ONLY)
-#
-#	add_custom_target(docs ALL
-#		COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/Doxyfile
-#		SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
-#endif()
 
 # uninstall target
 configure_file(

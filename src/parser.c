@@ -114,18 +114,14 @@ static inline void ajson_buffer_clear(ajson_parser *parser) {
     parser->buffer_used = 0;
 }
 
-#ifdef __GNUC__
-#   define AJSON_USE_GNUC_ADDRESS_FROM_LABEL
-#endif
-
 #define DISPATCH_PRELUDE \
     const char*  input = parser->input; \
     size_t       index = parser->input_current; \
     const size_t size  = parser->input_size;
 
 #ifdef AJSON_USE_GNUC_ADDRESS_FROM_LABEL
-#pragma GCC diagnostic ignored "-pedantic"
-#pragma GCC diagnostic ignored "-Wunused-label"
+#   pragma GCC diagnostic ignored "-pedantic"
+#   pragma GCC diagnostic ignored "-Wunused-label"
     // http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
     // use offsets instead of absolute addresses to reduce the number of
     // dynamic relocations for code in shared libraries
@@ -855,6 +851,6 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
 
     END_DISPATCH;
 }
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
+#ifdef AJSON_USE_GNUC_ADDRESS_FROM_LABEL
+#   pragma GCC diagnostic pop
 #endif
