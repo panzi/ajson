@@ -5,6 +5,7 @@ import errno
 
 from functools import wraps
 from ctypes    import get_errno
+from os.path   import split as pathsplit, join as pathjoin
 from errno     import EINVAL, ENOMEM
 from os        import strerror
 from io        import DEFAULT_BUFFER_SIZE
@@ -297,7 +298,10 @@ _ParserPtr = ctypes.POINTER(_Parser)
 _WriterPtr = ctypes.POINTER(_Writer)
 
 # load C functions from shared object
-_lib = ctypes.CDLL("libajson.so",use_errno=True)
+try:
+	_lib = ctypes.CDLL(pathjoin(pathsplit(__file__)[0],"libajson.so"),use_errno=True)
+except OSError:
+	_lib = ctypes.CDLL("libajson.so",use_errno=True)
 
 _ajson_version_major = _lib.ajson_version_major
 _ajson_version_major.argtypes = []
@@ -500,41 +504,41 @@ class Writer(object):
 	def flags(self):
 		return _ajson_writer_get_flags(self._writer)
 
-	write_null         = _make_write_func(_ajson_write_null)
-	write_boolean      = _make_write_func(_ajson_write_boolean)
-	write_number       = _make_write_func(_ajson_write_number)
-	write_integer      = _make_write_func(_ajson_write_integer)
-	write_begin_array  = _make_write_func(_ajson_write_begin_array)
-	write_end_array    = _make_write_func(_ajson_write_end_array)
-	write_begin_object = _make_write_func(_ajson_write_begin_object)
-	write_end_object   = _make_write_func(_ajson_write_end_object)
+	null         = _make_write_func(_ajson_write_null)
+	boolean      = _make_write_func(_ajson_write_boolean)
+	number       = _make_write_func(_ajson_write_number)
+	integer      = _make_write_func(_ajson_write_integer)
+	begin_array  = _make_write_func(_ajson_write_begin_array)
+	end_array    = _make_write_func(_ajson_write_end_array)
+	begin_object = _make_write_func(_ajson_write_begin_object)
+	end_object   = _make_write_func(_ajson_write_end_object)
 
 	@_make_write_func
-	def write_string(ptr, buffer, size, value):
+	def string(ptr, buffer, size, value):
 		return _ajson_write_string_utf8(ptr, buffer, size, value.encode('utf-8'))
 
-	def write(self,obj):
+	def value(self,obj):
 		refs = set()
 
 		def _write(obj):
 			if obj is None:
-				for data in self.write_null():
+				for data in self.null():
 					yield data
 
 			elif isinstance(obj, _Strings):
-				for data in self.write_string(obj):
+				for data in self.string(obj):
 					yield data
 
 			elif isinstance(obj, float):
-				for data in self.write_number(obj):
+				for data in self.number(obj):
 					yield data
 
 			elif isinstance(obj, _Ints):
 				if obj < -0x8000000000000000 or obj > 0x7fffffffffffffff:
-					for data in self.write_number(obj):
+					for data in self.number(obj):
 						yield data
 				else:
-					for data in self.write_integer(obj):
+					for data in self.integer(obj):
 						yield data
 
 			elif isinstance(obj, dict):
@@ -544,17 +548,17 @@ class Writer(object):
 
 				refs.add(ref)
 
-				for data in self.write_begin_object():
+				for data in self.begin_object():
 					yield data
 
 				for key in obj:
-					for data in self.write_string(key):
+					for data in self.string(key):
 						yield data
 
 					for data in _write(obj[key]):
 						yield data
 
-				for data in self.write_end_object():
+				for data in self.end_object():
 					yield data
 
 				refs.remove(ref)
@@ -566,14 +570,14 @@ class Writer(object):
 
 				refs.add(ref)
 
-				for data in self.write_begin_array():
+				for data in self.begin_array():
 					yield data
 
 				for item in obj:
 					for data in _write(item):
 						yield data
 
-				for data in self.write_end_array():
+				for data in self.end_array():
 					yield data
 
 				refs.remove(ref)
@@ -633,37 +637,37 @@ class FileWriter(object):
 	def flags(self):
 		return _ajson_writer_get_flags(self._writer)
 
-	write_null         = _make_file_write_func(_ajson_write_null)
-	write_boolean      = _make_file_write_func(_ajson_write_boolean)
-	write_number       = _make_file_write_func(_ajson_write_number)
-	write_integer      = _make_file_write_func(_ajson_write_integer)
-	write_begin_array  = _make_file_write_func(_ajson_write_begin_array)
-	write_end_array    = _make_file_write_func(_ajson_write_end_array)
-	write_begin_object = _make_file_write_func(_ajson_write_begin_object)
-	write_end_object   = _make_file_write_func(_ajson_write_end_object)
+	null         = _make_file_write_func(_ajson_write_null)
+	boolean      = _make_file_write_func(_ajson_write_boolean)
+	number       = _make_file_write_func(_ajson_write_number)
+	integer      = _make_file_write_func(_ajson_write_integer)
+	begin_array  = _make_file_write_func(_ajson_write_begin_array)
+	end_array    = _make_file_write_func(_ajson_write_end_array)
+	begin_object = _make_file_write_func(_ajson_write_begin_object)
+	end_object   = _make_file_write_func(_ajson_write_end_object)
 
 	@_make_file_write_func
-	def write_string(ptr, buffer, size, value):
+	def string(ptr, buffer, size, value):
 		return _ajson_write_string_utf8(ptr, buffer, size, value.encode('utf-8'))
 
-	def write(self,obj):
+	def value(self,obj):
 		refs = set()
 
 		def _write(obj):
 			if obj is None:
-				self.write_null()
+				self.null()
 
 			elif isinstance(obj, _Strings):
-				self.write_string(obj)
+				self.string(obj)
 
 			elif isinstance(obj, float):
-				self.write_number(obj)
+				self.number(obj)
 
 			elif isinstance(obj, _Ints):
 				if obj < -0x8000000000000000 or obj > 0x7fffffffffffffff:
-					self.write_number(obj)
+					self.number(obj)
 				else:
-					self.write_integer(obj)
+					self.integer(obj)
 
 			elif isinstance(obj, dict):
 				ref = id(obj)
@@ -672,13 +676,13 @@ class FileWriter(object):
 
 				refs.add(ref)
 
-				self.write_begin_object()
+				self.begin_object()
 
 				for key in obj:
-					self.write_string(key)
+					self.string(key)
 					_write(obj[key])
 
-				self.write_end_object()
+				self.end_object()
 
 				refs.remove(ref)
 
@@ -689,30 +693,30 @@ class FileWriter(object):
 
 				refs.add(ref)
 
-				self.write_begin_array()
+				self.begin_array()
 
 				for item in obj:
 					_write(item)
 
-				self.write_end_array()
+				self.end_array()
 
 				refs.remove(ref)
 
 			else:
 				raise TypeError("object has unhandeled type: %r" % obj)
 
-		return _write(obj)
+		_write(obj)
 
 def dump(obj, stream, ensure_ascii=True, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
 	FileWriter(
 		stream,
 		WRITER_FALG_ASCII if ensure_ascii else WRITER_FLAGS_NONE,
-		indent,buffer_size).write(obj)
+		indent,buffer_size).value(obj)
 
 def dumpb(obj, ensure_ascii=True, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
 	return bytes().join(Writer(
 		WRITER_FALG_ASCII if ensure_ascii else WRITER_FLAGS_NONE,
-		indent,buffer_size).write(obj))
+		indent,buffer_size).value(obj))
 
 def dumps(obj, ensure_ascii=True, indent=None, buffer_size=DEFAULT_BUFFER_SIZE):
 	return dumpb(obj, ensure_ascii, indent, buffer_size).decode('utf-8')
