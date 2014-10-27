@@ -4,6 +4,12 @@ configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
 set(AJSON_SRCS parser.c callback_parser.c writer.c ajson.c ajson.h config.h.in)
 
+if(NOT HAVE_SNPRINTF)
+	set(AJSON_SRCS ${AJSON_SRCS} snprintf.c snprintf.h)
+else()
+	add_definitions(-DHAVE_SNPRINTF)
+endif()
+
 add_compiler_export_flags()
 add_library(${AJSON_LIB_NAME} ${AJSON_SRCS})
 generate_export_header(${AJSON_LIB_NAME}

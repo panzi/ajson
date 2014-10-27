@@ -7,6 +7,10 @@
 #include <ctype.h>
 #include <math.h>
 
+#ifndef HAVE_SNPRINTF
+#	include "snprintf.h"
+#endif
+
 #define NOT_FIRST 32
 
 static int ajson_writer_push(ajson_writer *writer, char type);

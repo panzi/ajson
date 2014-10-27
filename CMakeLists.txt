@@ -11,11 +11,14 @@ int main() {
 label:
 	return 0;
 }
-" AJSON_USE_GNUC_ADDRESS_FROM_LABEL_INIT)
+" HAVE_ADDRESS_FROM_LABEL)
+
+check_c_source_compiles("#include <stdio.h>
+int main() { char buf[64]; return snprintf(buf, sizeof(buf), \"test\"); }" HAVE_SNPRINTF)
 
 option(AJSON_USE_GNUC_ADDRESS_FROM_LABEL
 	"Use GNUC extension to use label addresses for improved performance"
-	${AJSON_USE_GNUC_ADDRESS_FROM_LABEL_INIT})
+	${HAVE_ADDRESS_FROM_LABEL})
 option(BUILD_SHARED_LIBS "Build as shared library" ON)
 option(BUILD_EXAMPLES "Build examples" OFF)
 option(BUILD_TESTS "Build tests (TODO)" OFF)
@@ -43,9 +46,7 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 if(NOT WIN32)
-	find_library(M_LIBRARY
-		NAMES m
-		PATHS /usr/lib /usr/local/lib)
+	find_library(M_LIBRARY m)
 	if(M_LIBRARY)
 		set(AJSON_PRIVATE_LIBS -l${M_LIBRARY})
 	else()
