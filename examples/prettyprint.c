@@ -94,7 +94,7 @@ int main(int argc, const char *argv[]) {
                 break;
 
             case AJSON_TOK_ERROR:
-                fprintf(stderr, "%s:%zu:%zu: ajson_parse: %s\n", argc > 1 ? argv[1] : "<stdin>", parser.lineno, parser.columnno, ajson_error_str(parser.value.error.error));
+                fprintf(stderr, "%s: ajson_parse: %s\n", argc > 1 ? argv[1] : "<stdin>", ajson_error_str(parser.value.error.error));
                 fprintf(stderr, "%s:%zu: %s: error raised here\n", parser.value.error.filename, parser.value.error.lineno, parser.value.error.function);
 
                 if (argc > 1) fclose(fp);

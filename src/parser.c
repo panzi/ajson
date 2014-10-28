@@ -173,13 +173,6 @@ enum ajson_named_states {
         parser->input_current = index; \
         parser->stack[parser->stack_current] = JUMP; \
         return AJSON_TOK_NEED_DATA; \
-    } \
-    else if (input[index] == '\n') { \
-        parser->columnno = 0; \
-        ++ parser->lineno; \
-    } \
-    else { \
-        ++ parser->columnno; \
     }
 
 #define READ_NEXT() { \
@@ -203,7 +196,7 @@ enum ajson_named_states {
 #define STATE_WITH_DATA(NAME) \
     STATE(NAME) \
     if (AT_EOF()) { \
-        RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED_EOF) \
+        RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED_EOF); \
     } \
     else RQUIRE_DATA(STATE_REF(NAME))
 

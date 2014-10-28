@@ -70,8 +70,6 @@ struct ajson_parser_s {
     const char         *input;
     size_t              input_size;
     size_t              input_current;
-    size_t              lineno;
-    size_t              columnno;
     uintptr_t          *stack;
     size_t              stack_size;
     size_t              stack_current;
@@ -123,9 +121,6 @@ AJSON_EXPORT ajson_parser *ajson_alloc(int flags, enum ajson_encoding encoding);
 AJSON_EXPORT void          ajson_free (ajson_parser *parser);
 
 AJSON_EXPORT int ajson_get_flags(const ajson_parser *parser);
-
-AJSON_EXPORT size_t ajson_get_lineno  (const ajson_parser *parser);
-AJSON_EXPORT size_t ajson_get_columnno(const ajson_parser *parser);
 
 AJSON_EXPORT bool        ajson_get_boolean(const ajson_parser *parser);
 AJSON_EXPORT double      ajson_get_number (const ajson_parser *parser);

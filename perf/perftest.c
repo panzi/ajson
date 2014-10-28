@@ -117,7 +117,7 @@ run(int flags)
 
             if (stat != 0) {
                 if (stat == 2) {
-                    fprintf(stderr, "%zu:%zu: parsing document %d: %s\n", parser.lineno, parser.columnno, i, ajson_error_str(parser.value.error.error));
+                    fprintf(stderr, "parsing document %d: %s\n", i, ajson_error_str(parser.value.error.error));
                     fprintf(stderr, "%s:%zu: %s: error raised here\n", parser.value.error.filename, parser.value.error.lineno, parser.value.error.function);
                 }
                 else {

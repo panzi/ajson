@@ -118,26 +118,24 @@ def _error_from_errno():
 		raise OSError(err,strerror(err))	
 
 class ParserError(Exception):
-	__slots__ = 'lineno', 'columnno', 'error', 'source_filename', \
-	            'source_lineno', 'source_function', 'message'
+	__slots__ = 'error', 'filename', \
+	            'lineno', 'function', 'message'
 
-	def __init__(self,lineno,columnno,error,source_filename,source_lineno,source_function):
+	def __init__(self,error,filename,lineno,function):
 		Exception.__init__(self)
 
-		self.lineno   = lineno
-		self.columnno = columnno
 		self.error    = error
 		self.message  = _ajson_error_str(error).decode('utf-8')
-		self.source_filename = source_filename
-		self.source_lineno   = source_lineno
-		self.source_function = source_function
+		self.filename = filename
+		self.lineno   = lineno
+		self.function = function
 
 	def __str__(self):
-		return "%d:%d: %s\n%s:%s: %s: error raised here" % (
-			self.lineno, self.columnno, self.message,
-			self.source_filename if self.source_filename is not None else 'N/A',
-			self.source_lineno   if self.source_lineno   is not None else 'N/A',
-			self.source_function if self.source_function is not None else 'N/A')
+		return "%s\n%s:%s: %s: error raised here" % (
+			self.message,
+			self.filename if self.filename is not None else 'N/A',
+			self.lineno   if self.lineno   is not None else 'N/A',
+			self.function if self.function is not None else 'N/A')
 
 class Parser(object):
 	__slots__ = '_parser', '_data'
@@ -154,14 +152,6 @@ class Parser(object):
 	@property
 	def flags(self):
 		return _ajson_get_flags(self._parser)
-
-	@property
-	def lineno(self):
-		return _ajson_get_lineno(self._parser)
-
-	@property
-	def columnno(self):
-		return _ajson_get_columnno(self._parser)
 
 	def feed(self,data):
 		if _ajson_feed(self._parser, data, len(data)) != 0:
@@ -214,8 +204,6 @@ class Parser(object):
 
 		elif token == TOK_ERROR:
 			raise ParserError(
-				parser.lineno,
-				parser.columnno,
 				_ajson_get_error(ptr),
 				_ajson_get_error_filename(ptr),
 				_ajson_get_error_lineno(ptr),
@@ -334,14 +322,6 @@ _ajson_feed.restype  = ctypes.c_int
 _ajson_get_flags = _lib.ajson_get_flags
 _ajson_get_flags.argtypes = [_ParserPtr]
 _ajson_get_flags.restype  = ctypes.c_int
-
-_ajson_get_lineno = _lib.ajson_get_lineno
-_ajson_get_lineno.argtypes = [_ParserPtr]
-_ajson_get_lineno.restype  = ctypes.c_size_t
-
-_ajson_get_columnno = _lib.ajson_get_columnno
-_ajson_get_columnno.argtypes = [_ParserPtr]
-_ajson_get_columnno.restype  = ctypes.c_size_t
 
 _ajson_get_boolean = _lib.ajson_get_boolean
 _ajson_get_boolean.argtypes = [_ParserPtr]

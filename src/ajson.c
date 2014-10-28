@@ -11,9 +11,6 @@ unsigned int ajson_version_patch() { return AJSON_VERSION_PATCH; }
 
 int ajson_get_flags(const ajson_parser *parser) { return parser->flags; }
 
-size_t ajson_get_lineno  (const ajson_parser *parser) { return parser->lineno;   }
-size_t ajson_get_columnno(const ajson_parser *parser) { return parser->columnno; }
-
 bool        ajson_get_boolean(const ajson_parser *parser) { return parser->value.boolean; }
 double      ajson_get_number (const ajson_parser *parser) { return parser->value.number;  }
 int64_t     ajson_get_integer(const ajson_parser *parser) { return parser->value.integer; }
@@ -78,7 +75,6 @@ int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding) {
     }
 
     memset(parser, 0, sizeof(ajson_parser));
-    parser->lineno   = 1;
     parser->flags    = flags;
     parser->encoding = encoding;
 
@@ -92,8 +88,6 @@ int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding) {
 }
 
 void ajson_clear(ajson_parser *parser) {
-    parser->lineno   = 1;
-    parser->columnno = 0;
     if (parser->stack) parser->stack[0] = 0;
     parser->stack_current = 0;
     parser->buffer_used   = 0;
