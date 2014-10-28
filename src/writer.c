@@ -16,19 +16,19 @@
 static int ajson_writer_push(ajson_writer *writer, char type);
 static int ajson_writer_pop( ajson_writer *writer);
 
-static ssize_t _ajson_write_prelude(ajson_writer *writer, char *buffer, size_t size, size_t index);
-static ssize_t _ajson_write_dummy  (ajson_writer *writer, char *buffer, size_t size, size_t index);
-static ssize_t _ajson_write_null   (ajson_writer *writer, char *buffer, size_t size, size_t index);
-static ssize_t _ajson_write_boolean(ajson_writer *writer, char *buffer, size_t size, size_t index);
-static ssize_t _ajson_write_number (ajson_writer *writer, char *buffer, size_t size, size_t index);
-static ssize_t _ajson_write_integer(ajson_writer *writer, char *buffer, size_t size, size_t index);
-static ssize_t _ajson_write_string (ajson_writer *writer, char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_prelude(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_dummy  (ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_null   (ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_boolean(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_number (ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_integer(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_string (ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
 
-static ssize_t _ajson_write_begin_array(ajson_writer *writer, char *buffer, size_t size, size_t index);
-static ssize_t _ajson_write_end_array  (ajson_writer *writer, char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_begin_array(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_end_array  (ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
 
-static ssize_t _ajson_write_begin_object(ajson_writer *writer, char *buffer, size_t size, size_t index);
-static ssize_t _ajson_write_end_object  (ajson_writer *writer, char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_begin_object(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
+static ssize_t _ajson_write_end_object  (ajson_writer *writer, unsigned char *buffer, size_t size, size_t index);
 
 
 int         ajson_writer_get_flags (ajson_writer *writer) { return writer->flags;  }
@@ -295,7 +295,7 @@ enum ajson_named_states {
     } \
 }
 
-ssize_t _ajson_write_prelude(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_prelude(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     int curr = writer->stack[writer->stack_current];
@@ -337,7 +337,7 @@ ssize_t _ajson_write_prelude(ajson_writer *writer, char *buffer, size_t size, si
     END_DISPATCH;
 }
 
-ssize_t _ajson_write_dummy(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_dummy(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     (void)ajson_writer_push;
     (void)ajson_writer_pop;
     (void)writer;
@@ -347,7 +347,7 @@ ssize_t _ajson_write_dummy(ajson_writer *writer, char *buffer, size_t size, size
     return 0;
 }
 
-ssize_t _ajson_write_null(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_null(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     WRITE_STR("null");
@@ -355,7 +355,7 @@ ssize_t _ajson_write_null(ajson_writer *writer, char *buffer, size_t size, size_
     END_DISPATCH;
 }
 
-ssize_t _ajson_write_boolean(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_boolean(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     WRITE_STR(writer->value.boolean ? "true" : "false");
@@ -363,7 +363,7 @@ ssize_t _ajson_write_boolean(ajson_writer *writer, char *buffer, size_t size, si
     END_DISPATCH;
 }
 
-ssize_t _ajson_write_number(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_number(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     if (isfinite(writer->value.number.value)) {
@@ -371,7 +371,7 @@ ssize_t _ajson_write_number(ajson_writer *writer, char *buffer, size_t size, siz
 
         if (nfree >= sizeof(writer->value.number.buffer)) {
             // this code path saves one memcpy
-            int count = snprintf(buffer + index, nfree, "%.16g", writer->value.number.value);
+            int count = snprintf((char*)buffer + index, nfree, "%.16g", writer->value.number.value);
             if (count < 0) {
                 RAISE_ERROR();
             }
@@ -404,7 +404,7 @@ ssize_t _ajson_write_number(ajson_writer *writer, char *buffer, size_t size, siz
     END_DISPATCH;
 }
 
-ssize_t _ajson_write_integer(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_integer(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     if (writer->value.integer.value.sval == 0) {
@@ -447,7 +447,7 @@ static inline size_t ajson_strlen4(const char* str) {
     return 4;
 }
 
-ssize_t _ajson_write_string(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_string(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     WRITE_CHAR('"');
@@ -503,7 +503,7 @@ ssize_t _ajson_write_string(ajson_writer *writer, char *buffer, size_t size, siz
         }
         else {
             uint32_t codepoint = 0;
-            int count = ajson_decode_utf8(writer->value.string.value, ajson_strlen4(writer->value.string.value), &codepoint);
+            int count = ajson_decode_utf8((const unsigned char*)writer->value.string.value, ajson_strlen4(writer->value.string.value), &codepoint);
             if (count <= 0) {
                 RAISE_ERROR();
             }
@@ -568,7 +568,7 @@ ssize_t _ajson_write_string(ajson_writer *writer, char *buffer, size_t size, siz
     END_DISPATCH;
 }
 
-ssize_t _ajson_write_begin_array(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_begin_array(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     if (ajson_writer_push(writer, 'A') != 0) {
@@ -580,7 +580,7 @@ ssize_t _ajson_write_begin_array(ajson_writer *writer, char *buffer, size_t size
     END_DISPATCH;
 }
 
-ssize_t _ajson_write_end_array(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_end_array(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     int which = ajson_writer_pop(writer);
@@ -603,7 +603,7 @@ ssize_t _ajson_write_end_array(ajson_writer *writer, char *buffer, size_t size, 
     END_DISPATCH;
 }
 
-ssize_t _ajson_write_begin_object(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_begin_object(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     if (ajson_writer_push(writer, 'O') != 0) {
@@ -615,7 +615,7 @@ ssize_t _ajson_write_begin_object(ajson_writer *writer, char *buffer, size_t siz
     END_DISPATCH;
 }
 
-ssize_t _ajson_write_end_object(ajson_writer *writer, char *buffer, size_t size, size_t index) {
+ssize_t _ajson_write_end_object(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
     int which = ajson_writer_pop(writer);

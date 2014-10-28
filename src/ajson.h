@@ -114,6 +114,7 @@ AJSON_EXPORT unsigned int ajson_version_minor();
 AJSON_EXPORT unsigned int ajson_version_patch();
 
 AJSON_EXPORT int              ajson_init      (ajson_parser *parser, int flags, enum ajson_encoding encoding);
+AJSON_EXPORT void             ajson_clear     (ajson_parser *parser);
 AJSON_EXPORT void             ajson_destroy   (ajson_parser *parser);
 AJSON_EXPORT int              ajson_feed      (ajson_parser *parser, const void *buffer, size_t size);
 AJSON_EXPORT enum ajson_token ajson_next_token(ajson_parser *parser);
@@ -184,7 +185,7 @@ AJSON_EXPORT int ajson_cb_dispatch  (ajson_cb_parser *parser);
 
 struct ajson_writer_s;
 
-typedef ssize_t (*ajson_write_func)(struct ajson_writer_s *writer, char *buffer, size_t size, size_t index);
+typedef ssize_t (*ajson_write_func)(struct ajson_writer_s *writer, unsigned char *buffer, size_t size, size_t index);
 
 struct ajson_writer_s {
     int              flags;
@@ -255,7 +256,7 @@ AJSON_EXPORT ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, si
 AJSON_EXPORT int         ajson_writer_get_flags (ajson_writer *writer);
 AJSON_EXPORT const char *ajson_writer_get_indent(ajson_writer *writer);
 
-AJSON_EXPORT int ajson_decode_utf8(const char buffer[], size_t size, uint32_t *codepoint);
+AJSON_EXPORT int ajson_decode_utf8(const unsigned char buffer[], size_t size, uint32_t *codepoint);
 
 #ifdef __cplusplus
 }

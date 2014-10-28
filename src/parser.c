@@ -11,7 +11,7 @@
     (PARSER)->value.error.function = __func__; \
     (PARSER)->value.error.lineno   = __LINE__;
 
-static inline int ajson_push(ajson_parser *parser, uintptr_t state) {
+static inline int _ajson_push(ajson_parser *parser, uintptr_t state) {
     if (parser->stack_current + 1 == parser->buffer_size) {
         size_t newsize = parser->stack_size + AJSON_STACK_SIZE;
         uintptr_t *stack = SIZE_MAX/sizeof(uintptr_t) < newsize ? NULL : realloc(parser->stack, sizeof(uintptr_t) * newsize);
@@ -25,6 +25,10 @@ static inline int ajson_push(ajson_parser *parser, uintptr_t state) {
     parser->stack[parser->stack_current ++] = state;
     return 0;
 }
+#define ajson_push(parser, state) \
+    (parser->stack_current + 1 == parser->buffer_size ? \
+        _ajson_push(parser, state) : \
+        (int)(parser->stack[parser->stack_current ++] = state), 0)
 
 static inline int ajson_buffer_ensure(ajson_parser *parser, size_t space) {
     size_t needed = parser->buffer_used + space;
@@ -44,7 +48,7 @@ static inline int ajson_buffer_ensure(ajson_parser *parser, size_t space) {
     return 0;
 }
 
-static inline int ajson_buffer_putc(ajson_parser *parser, char ch) {
+static inline int _ajson_buffer_putc(ajson_parser *parser, char ch) {
     if (parser->buffer_size == parser->buffer_used) {
         size_t newsize = parser->buffer_size + BUFSIZ;
         char *buffer = realloc(parser->buffer, newsize);
@@ -58,6 +62,10 @@ static inline int ajson_buffer_putc(ajson_parser *parser, char ch) {
     parser->buffer[parser->buffer_used ++] = ch;
     return 0;
 }
+#define ajson_buffer_putc(parser, ch) \
+    (parser->buffer_size == parser->buffer_used ? \
+        _ajson_buffer_putc(parser, ch) : \
+        (parser->buffer[parser->buffer_used ++] = ch), 0)
 
 static inline int ajson_buffer_putcp(ajson_parser *parser, uint32_t codepoint) {
     if (codepoint < 0x80) {

@@ -21,6 +21,7 @@ option(AJSON_USE_GNUC_ADDRESS_FROM_LABEL
 	${HAVE_ADDRESS_FROM_LABEL})
 option(BUILD_SHARED_LIBS "Build as shared library" ON)
 option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_PERF "Build performance tests" ON)
 option(BUILD_TESTS "Build tests (TODO)" OFF)
 
 set(AJSON_MAJOR_VERSION 1)
@@ -96,6 +97,10 @@ add_subdirectory(src)
 
 if(BUILD_EXAMPLES)
 	add_subdirectory(examples)
+endif()
+
+if(BUILD_PERF)
+	add_subdirectory(perf)
 endif()
 
 if(BUILD_TESTS)
