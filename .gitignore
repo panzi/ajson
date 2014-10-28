@@ -1,7 +1,7 @@
 .*
 *~
 *.pyc
-build
+build*
 CMakeLists.txt.user
 *.so
 __pycache__
