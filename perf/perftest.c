@@ -165,17 +165,17 @@ main(void)
     printf("-- speed tests determine parsing throughput given %d different sample documents --\n",
            num_docs());
 
-//    printf("Parsing all numbers as double:\n");
-//    rv = run(AJSON_FLAGS_NONE);
-//    if (rv != 0) return rv;
+    printf("Parsing all numbers as double:\n");
+    rv = run(AJSON_FLAGS_NONE);
+    if (rv != 0) return rv;
     
     printf("Parsing integers as int64_t:\n");
     rv = run(AJSON_FLAG_INTEGER);
     if (rv != 0) return rv;
     
-//    printf("Parsing numbers as strings:\n");
-//    rv = run(AJSON_FLAG_INTEGER);
-//    if (rv != 0) return rv;
+    printf("Parsing numbers as strings:\n");
+    rv = run(AJSON_FLAG_INTEGER);
+    if (rv != 0) return rv;
 
     return 0;
 }

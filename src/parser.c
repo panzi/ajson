@@ -321,7 +321,101 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
             for (;;) {
                 READ_NEXT();
                 unsigned char ch = CURR_CH();
-                if (ch == '\\') {
+                if (ch != '\\') {
+                    if (ch < 0x80) {
+                        if (ch == '"') {
+                            if (ajson_buffer_putc(parser, 0) != 0) {
+                                RAISE_ERROR(AJSON_ERROR_MEMORY);
+                            }
+
+                            READ_NEXT_OR_EOF();
+                            RETURN_VALUE(AJSON_TOK_STRING, .string = parser->buffer);
+                        }
+                        else {
+                            if (ajson_buffer_putc(parser, ch) != 0) {
+                                RAISE_ERROR(AJSON_ERROR_MEMORY);
+                            }
+                        }
+                    }
+                    else if (parser->encoding == AJSON_ENC_UTF8) {
+                        // validate UTF-8
+                        if (ch < 0xC2) {
+                            // unexpected continuation or overlong 2-byte sequence
+                            RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
+                        }
+                        else if (ch < 0xE0) {
+                            // 2-byte sequence
+                            parser->value.utf8[0] = ch;
+                            READ_NEXT();
+                            parser->value.utf8[1] = ch = CURR_CH();
+
+                            if ((ch & 0xC0) != 0x80) {
+                                RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
+                            }
+
+                            if (ajson_buffer_append(parser, parser->value.utf8, 2) != 0) {
+                                RAISE_ERROR(AJSON_ERROR_MEMORY);
+                            }
+                        }
+                        else if (ch < 0xF0) {
+                            // 3-byte sequence
+                            parser->value.utf8[0] = ch;
+                            READ_NEXT();
+                            parser->value.utf8[1] = ch = CURR_CH();
+
+                            if ((ch & 0xC0) != 0x80 || (parser->value.utf8[0] == 0xE0 && ch < 0xA0)) {
+                                RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
+                            }
+
+                            READ_NEXT();
+                            parser->value.utf8[2] = ch = CURR_CH();
+
+                            if ((ch & 0xC0) != 0x80) {
+                                RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
+                            }
+
+                            if (ajson_buffer_append(parser, parser->value.utf8, 3) != 0) {
+                                RAISE_ERROR(AJSON_ERROR_MEMORY);
+                            }
+                        }
+                        else if (ch < 0xF5) {
+                            // 4-byte sequence
+                            parser->value.utf8[0] = ch;
+                            READ_NEXT();
+                            parser->value.utf8[1] = ch = CURR_CH();
+
+                            unsigned char unit1 = parser->value.utf8[0];
+                            if ((ch & 0xC0) != 0x80 || (unit1 == 0xF0 && ch < 0x90) || (unit1 == 0xF4 && ch >= 0x90)) {
+                                RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
+                            }
+
+                            READ_NEXT();
+                            parser->value.utf8[2] = ch = CURR_CH();
+
+                            if ((ch & 0xC0) != 0x80) {
+                                RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
+                            }
+
+                            READ_NEXT();
+                            parser->value.utf8[3] = ch = CURR_CH();
+
+                            if ((ch & 0xC0) != 0x80) {
+                                RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
+                            }
+
+                            if (ajson_buffer_append(parser, parser->value.utf8, 4) != 0) {
+                                RAISE_ERROR(AJSON_ERROR_MEMORY);
+                            }
+                        }
+                        else {
+                            RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
+                        }
+                    }
+                    else if (ajson_buffer_putc(parser, ch) != 0) {
+                        RAISE_ERROR(AJSON_ERROR_MEMORY);
+                    }
+                }
+                else {
                     READ_NEXT();
                     ch = CURR_CH();
                     if (ch == '"' || ch == '\\' || ch == '/') {
@@ -431,93 +525,6 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     }
                     else {
                         RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED);
-                    }
-                }
-                else if (ch == '"') {
-                    if (ajson_buffer_putc(parser, 0) != 0) {
-                        RAISE_ERROR(AJSON_ERROR_MEMORY);
-                    }
-
-                    READ_NEXT_OR_EOF();
-                    RETURN_VALUE(AJSON_TOK_STRING, .string = parser->buffer);
-                }
-                else if (ch >= 0x80 && parser->encoding == AJSON_ENC_UTF8) {
-                    // validate UTF-8
-                    if (ch < 0xC2) {
-                        // unexpected continuation or overlong 2-byte sequence
-                        RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
-                    }
-                    else if (ch < 0xE0) {
-                        // 2-byte sequence
-                        parser->value.utf8[0] = ch;
-                        READ_NEXT();
-                        parser->value.utf8[1] = ch = CURR_CH();
-
-                        if ((ch & 0xC0) != 0x80) {
-                            RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
-                        }
-
-                        if (ajson_buffer_append(parser, parser->value.utf8, 2) != 0) {
-                            RAISE_ERROR(AJSON_ERROR_MEMORY);
-                        }
-                    }
-                    else if (ch < 0xF0) {
-                        // 3-byte sequence
-                        parser->value.utf8[0] = ch;
-                        READ_NEXT();
-                        parser->value.utf8[1] = ch = CURR_CH();
-
-                        if ((ch & 0xC0) != 0x80 || (parser->value.utf8[0] == 0xE0 && ch < 0xA0)) {
-                            RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
-                        }
-
-                        READ_NEXT();
-                        parser->value.utf8[2] = ch = CURR_CH();
-
-                        if ((ch & 0xC0) != 0x80) {
-                            RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
-                        }
-
-                        if (ajson_buffer_append(parser, parser->value.utf8, 3) != 0) {
-                            RAISE_ERROR(AJSON_ERROR_MEMORY);
-                        }
-                    }
-                    else if (ch < 0xF5) {
-                        // 4-byte sequence
-                        parser->value.utf8[0] = ch;
-                        READ_NEXT();
-                        parser->value.utf8[1] = ch = CURR_CH();
-
-                        unsigned char unit1 = parser->value.utf8[0];
-                        if ((ch & 0xC0) != 0x80 || (unit1 == 0xF0 && ch < 0x90) || (unit1 == 0xF4 && ch >= 0x90)) {
-                            RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
-                        }
-
-                        READ_NEXT();
-                        parser->value.utf8[2] = ch = CURR_CH();
-
-                        if ((ch & 0xC0) != 0x80) {
-                            RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
-                        }
-
-                        READ_NEXT();
-                        parser->value.utf8[3] = ch = CURR_CH();
-
-                        if ((ch & 0xC0) != 0x80) {
-                            RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
-                        }
-
-                        if (ajson_buffer_append(parser, parser->value.utf8, 4) != 0) {
-                            RAISE_ERROR(AJSON_ERROR_MEMORY);
-                        }
-                    }
-                    else {
-                        RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
-                    }
-                }
-                else {
-                    if (ajson_buffer_putc(parser, ch) != 0) {
-                        RAISE_ERROR(AJSON_ERROR_MEMORY);
                     }
                 }
             }
@@ -705,6 +712,8 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                             do {
                                 READ_NEXT_OR_EOF();
                             } while (!AT_EOF() && isdigit(CURR_CH()));
+
+                            break;
                         }
                         parser->value.components.exponent *= 10;
                         parser->value.components.exponent += digit;
