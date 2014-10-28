@@ -1,7 +1,6 @@
 #include "ajson.h"
 
 #include <inttypes.h>
-#include <ctype.h>
 #include <math.h>
 #include <string.h>
 
@@ -241,6 +240,10 @@ enum ajson_named_states {
     AUTO_STATE(); \
 }
 
+#define isspace(CH) ((CH) == ' ' || (CH) == '\r' || (CH) == '\n' || (CH) == '\t')
+#define isdigit(CH) ((CH) >= '0' && (CH) <= '9')
+#define isword(CH)  (isdigit(CH) || ((CH) >= 'A' && (CH) <= 'Z') || ((CH) >= 'a' && (CH) <= 'z') || (CH) == '_')
+
 enum ajson_token ajson_next_token(ajson_parser *parser) {
     BEGIN_DISPATCH;
 
@@ -271,7 +274,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     READ_NEXT();
                     if (CURR_CH() == 'e') {
                         READ_NEXT_OR_EOF();
-                        if (AT_EOF() || ispunct(CURR_CH()) || isspace(CURR_CH())) {
+                        if (AT_EOF() || !isword(CURR_CH())) {
                             RETURN_VALUE(AJSON_TOK_BOOLEAN, .boolean = true);
                         }
                     }
@@ -289,7 +292,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                         READ_NEXT();
                         if (CURR_CH() == 'e') {
                             READ_NEXT_OR_EOF();
-                            if (AT_EOF() || ispunct(CURR_CH()) || isspace(CURR_CH())) {
+                            if (AT_EOF() || !isword(CURR_CH())) {
                                 RETURN_VALUE(AJSON_TOK_BOOLEAN, .boolean = false);
                             }
                         }
@@ -306,7 +309,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     READ_NEXT();
                     if (CURR_CH() == 'l') {
                         READ_NEXT_OR_EOF();
-                        if (AT_EOF() || ispunct(CURR_CH()) || isspace(CURR_CH())) {
+                        if (AT_EOF() || !isword(CURR_CH())) {
                             RETURN(AJSON_TOK_NULL);
                         }
                     }
@@ -418,7 +421,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                 else {
                     READ_NEXT();
                     ch = CURR_CH();
-                    if (ch == '"' || ch == '\\' || ch == '/') {
+                    if (ch == '"' || ch == '/' || ch == '\\') {
                         if (ajson_buffer_putc(parser, ch) != 0) {
                             RAISE_ERROR(AJSON_ERROR_MEMORY);
                         }
@@ -599,7 +602,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     } while (!AT_EOF() && isdigit(CURR_CH()));
                 }
 
-                if (!AT_EOF() && !ispunct(CURR_CH()) && !isspace(CURR_CH())) {
+                if (!AT_EOF() && isword(CURR_CH())) {
                     RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED);
                 }
 
@@ -725,7 +728,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     parser->value.components.isinteger = false;
                 }
 
-                if (!AT_EOF() && !ispunct(CURR_CH()) && !isspace(CURR_CH())) {
+                if (!AT_EOF() && isword(CURR_CH())) {
                     RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED);
                 }
 
