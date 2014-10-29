@@ -1,16 +1,79 @@
 #include <stdio.h>
 #include <string.h>
+#include <getopt.h>
+#include <inttypes.h>
 
 #include "ajson.h"
 
-int main(int argc, const char *argv[]) {
-    FILE*        fp;
-    ajson_parser parser;
+int main(int argc, char *argv[]) {
+    struct option long_options[] = {
+        {"help",              no_argument,       0, 'h'},
+        {"integers",          no_argument,       0, 'i'},
+        {"number-components", no_argument,       0, 'c'},
+        {"numbers-as-string", no_argument,       0, 's'},
+        {"encoding",          required_argument, 0, 'e'},
+        {0,                   0,                 0,  0 }
+    };
 
-    if (argc > 1) {
-        fp = fopen(argv[1], "r");
+    FILE* fp;
+    int   flags = AJSON_FLAGS_NONE;
+    enum ajson_encoding encoding = AJSON_ENC_UTF8;
+    ajson_parser        parser;
+
+    for (;;) {
+        int opt = getopt_long(argc, argv, "hie:aI:n", long_options, NULL);
+
+        if (opt == -1)
+            break;
+
+        switch (opt) {
+        case 'h':
+            printf(
+                        "usage: %s [options] [input-file]\n"
+                        "\n"
+                        "\t-h, --help                 print this help message\n"
+                        "\t-i, --integer              parse numbers without decimals or exponent as 64bit integers\n"
+                        "\t-c, --number-components    print parsed number components instead of constructed floating point number\n"
+                        "\t-s, --numbers-as-string    parse numbers as string\n"
+                        "\t-e, --encoding=ENCODING    input encoding 'UTF-8' (default) or 'LATIN-1'\n",
+                        argc > 0 ? argv[0] : "prettyprint");
+            return 0;
+
+        case 'i':
+            flags |= AJSON_FLAG_INTEGER;
+            break;
+
+        case 'c':
+            flags |= AJSON_FLAG_NUMBER_COMPONENTS;
+            break;
+
+        case 's':
+            flags |= AJSON_FLAG_NUMBER_AS_STRING;
+            break;
+
+        case 'e':
+            if (strcasecmp(optarg, "UTF-8") == 0 || strcasecmp(optarg, "UTF8") == 0) {
+                encoding = AJSON_ENC_UTF8;
+            }
+            else if (strcasecmp(optarg, "LATIN-1") == 0 || strcasecmp(optarg, "LATIN1") == 0 || strcasecmp(optarg, "ISO-8859-1") == 0 || strcasecmp(optarg, "ISO_8859-1") == 0) {
+                encoding = AJSON_ENC_LATIN1;
+            }
+            else {
+                fprintf(stderr, "*** unsupported encoding: %s\n", optarg);
+                return 1;
+            }
+            break;
+
+        case '?':
+            fprintf(stderr, "*** unknown option: -%s\n", optarg);
+            return 1;
+        }
+    }
+
+    if (optind < argc) {
+        fp = fopen(argv[optind], "r");
         if (!fp) {
-            perror(argv[1]);
+            perror(argv[optind]);
             return 1;
         }
     }
@@ -18,9 +81,9 @@ int main(int argc, const char *argv[]) {
         fp = stdin;
     }
 
-    if (ajson_init(&parser, AJSON_FLAG_INTEGER, AJSON_ENC_UTF8) != 0) {
+    if (ajson_init(&parser, flags, encoding) != 0) {
         perror("ajson_init");
-        if (argc > 1) fclose(fp);
+        if (optind < argc) fclose(fp);
         return 1;
     }
 
@@ -32,7 +95,7 @@ int main(int argc, const char *argv[]) {
         if (ajson_feed(&parser, buf, size) != 0) {
             perror("ajson_feed");
             ajson_destroy(&parser);
-            if (argc > 1) fclose(fp);
+            if (optind < argc) fclose(fp);
             return 1;
         }
 
@@ -50,7 +113,22 @@ int main(int argc, const char *argv[]) {
                 break;
 
             case AJSON_TOK_NUMBER:
-                printf("TOK: number: %.16g\n", parser.value.number);
+                if (flags & AJSON_FLAG_NUMBER_COMPONENTS) {
+                    printf("TOK: number: isinteger: %s, positive: %s, integer: %" PRIu64 ", decimal: %" PRIu64 ", decimal_places: %" PRIu64 ", exponent_positive: %s, exponent: %" PRIu64 "\n",
+                           parser.value.components.isinteger ? "true" : "false",
+                           parser.value.components.positive  ? "true" : "false",
+                           parser.value.components.integer,
+                           parser.value.components.decimal,
+                           parser.value.components.decimal_places,
+                           parser.value.components.exponent_positive ? "true" : "false",
+                           parser.value.components.exponent);
+                }
+                else if (flags & AJSON_FLAG_NUMBER_AS_STRING) {
+                    printf("TOK: number: %s\n", parser.value.string);
+                }
+                else {
+                    printf("TOK: number: %.16g\n", parser.value.number);
+                }
                 break;
 
             case AJSON_TOK_INTEGER:
@@ -84,10 +162,10 @@ int main(int argc, const char *argv[]) {
 
             case AJSON_TOK_ERROR:
                 printf("TOK: error\n");
-                fprintf(stderr, "%s: ajson_parse: %s\n", argc > 1 ? argv[1] : "<stdin>", ajson_error_str(parser.value.error.error));
+                fprintf(stderr, "%s: ajson_parse: %s\n", optind < argc ? argv[optind] : "<stdin>", ajson_error_str(parser.value.error.error));
                 fprintf(stderr, "%s:%zu: %s: error raised here\n", parser.value.error.filename, parser.value.error.lineno, parser.value.error.function);
                 ajson_destroy(&parser);
-                if (argc > 1) fclose(fp);
+                if (optind < argc) fclose(fp);
                 return 1;
 
             case AJSON_TOK_NEED_DATA:
@@ -103,12 +181,12 @@ int main(int argc, const char *argv[]) {
     if (ferror(fp)) {
         perror("fread");
         ajson_destroy(&parser);
-        if (argc > 1) fclose(fp);
+        if (optind < argc) fclose(fp);
         return 1;
     }
 
     ajson_destroy(&parser);
-    if (argc > 1) fclose(fp);
+    if (optind < argc) fclose(fp);
 
     return 0;
 }

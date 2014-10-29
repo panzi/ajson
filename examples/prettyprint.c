@@ -2,16 +2,86 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <getopt.h>
 
-int main(int argc, const char *argv[]) {
+int main(int argc, char *argv[]) {
+    struct option long_options[] = {
+        {"help",     no_argument,       0, 'h'},
+        {"integers", no_argument,       0, 'i'},
+        {"encoding", required_argument, 0, 'e'},
+        {"ascii",    no_argument,       0, 'a'},
+        {"indent",   required_argument, 0, 'I'},
+        {"ugly",     no_argument,       0, 'u'},
+        {0,          0,                 0,  0 }
+    };
+
     FILE*        fp;
+    int          parser_flags = AJSON_FLAGS_NONE;
+    int          writer_flags = AJSON_WRITER_FLAGS_NONE;
+    const char*  indent = "\t";
+    enum ajson_encoding encoding = AJSON_ENC_UTF8;
     ajson_parser parser;
     ajson_writer writer;
 
-    if (argc > 1) {
-        fp = fopen(argv[1], "r");
+    for (;;) {
+        int opt = getopt_long(argc, argv, "hie:aI:n", long_options, NULL);
+
+        if (opt == -1)
+            break;
+
+        switch (opt) {
+        case 'h':
+            printf(
+                        "usage: %s [options] [input-file]\n"
+                        "\n"
+                        "\t-h, --help                 print this help message\n"
+                        "\t-i, --integer              parse numbers without decimals or exponent as 64bit integers\n"
+                        "\t-e, --encoding=ENCODING    input encoding 'UTF-8' (default) or 'LATIN-1'\n"
+                        "\t-a, --ascii                produce ASCII compatible output\n"
+                        "\t-I, --indent=INDENT        use INDENT as indentation (default: $'\\t')\n"
+                        "\t-u, --ugly                 don't pretty print\n",
+                        argc > 0 ? argv[0] : "prettyprint");
+            return 0;
+
+        case 'i':
+            parser_flags |= AJSON_FLAG_INTEGER;
+            break;
+
+        case 'e':
+            if (strcasecmp(optarg, "UTF-8") == 0 || strcasecmp(optarg, "UTF8") == 0) {
+                encoding = AJSON_ENC_UTF8;
+            }
+            else if (strcasecmp(optarg, "LATIN-1") == 0 || strcasecmp(optarg, "LATIN1") == 0 || strcasecmp(optarg, "ISO-8859-1") == 0 || strcasecmp(optarg, "ISO_8859-1") == 0) {
+                encoding = AJSON_ENC_LATIN1;
+            }
+            else {
+                fprintf(stderr, "*** unsupported encoding: %s\n", optarg);
+                return 1;
+            }
+            break;
+
+        case 'a':
+            writer_flags |= AJSON_WRITER_FLAG_ASCII;
+            break;
+
+        case 'I':
+            indent = optarg;
+            break;
+
+        case 'u':
+            indent = NULL;
+            break;
+
+        case '?':
+            fprintf(stderr, "*** unknown option: -%s\n", optarg);
+            return 1;
+        }
+    }
+
+    if (optind < argc) {
+        fp = fopen(argv[optind], "r");
         if (!fp) {
-            perror(argv[1]);
+            perror(argv[optind]);
             return 1;
         }
     }
@@ -19,15 +89,15 @@ int main(int argc, const char *argv[]) {
         fp = stdin;
     }
 
-    if (ajson_init(&parser, AJSON_FLAG_INTEGER, AJSON_ENC_UTF8) != 0) {
+    if (ajson_init(&parser, parser_flags, encoding) != 0) {
         perror("ajson_init");
-        if (argc > 1) fclose(fp);
+        if (optind < argc) fclose(fp);
         return 1;
     }
 
-    if (ajson_writer_init(&writer, AJSON_WRITER_FLAG_ASCII, "\t") != 0) {
+    if (ajson_writer_init(&writer, writer_flags, indent) != 0) {
         perror("ajson_writer_init");
-        if (argc > 1) fclose(fp);
+        if (optind < argc) fclose(fp);
         ajson_destroy(&parser);
         return 1;
     }
@@ -40,7 +110,7 @@ int main(int argc, const char *argv[]) {
 
         if (ajson_feed(&parser, inbuf, size) != 0) {
             perror("ajson_feed");
-            if (argc > 1) fclose(fp);
+            if (optind < argc) fclose(fp);
             ajson_writer_destroy(&writer);
             ajson_destroy(&parser);
             return 1;
@@ -94,10 +164,10 @@ int main(int argc, const char *argv[]) {
                 break;
 
             case AJSON_TOK_ERROR:
-                fprintf(stderr, "%s: ajson_parse: %s\n", argc > 1 ? argv[1] : "<stdin>", ajson_error_str(parser.value.error.error));
+                fprintf(stderr, "%s: ajson_parse: %s\n", optind < argc ? argv[optind] : "<stdin>", ajson_error_str(parser.value.error.error));
                 fprintf(stderr, "%s:%zu: %s: error raised here\n", parser.value.error.filename, parser.value.error.lineno, parser.value.error.function);
 
-                if (argc > 1) fclose(fp);
+                if (optind < argc) fclose(fp);
                 ajson_writer_destroy(&writer);
                 ajson_destroy(&parser);
                 return 1;
@@ -110,7 +180,7 @@ int main(int argc, const char *argv[]) {
             while (written > 0) {
                 if (fwrite(outbuf, 1, written, stdout) < (size_t)written) {
                     perror("fwrite");
-                    if (argc > 1) fclose(fp);
+                    if (optind < argc) fclose(fp);
                     ajson_writer_destroy(&writer);
                     ajson_destroy(&parser);
                     return 1;
@@ -121,7 +191,7 @@ int main(int argc, const char *argv[]) {
 
             if (written < 0) {
                 perror("ajson_write_*");
-                if (argc > 1) fclose(fp);
+                if (optind < argc) fclose(fp);
                 ajson_writer_destroy(&writer);
                 ajson_destroy(&parser);
                 return 1;
@@ -132,7 +202,7 @@ int main(int argc, const char *argv[]) {
             break;
     }
 
-    if (argc > 1) fclose(fp);
+    if (optind < argc) fclose(fp);
     ajson_writer_destroy(&writer);
     ajson_destroy(&parser);
 
