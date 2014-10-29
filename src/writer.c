@@ -209,7 +209,7 @@ ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, size_t size) {
 }
 
 int ajson_writer_push(ajson_writer *writer, char type) {
-    if (writer->stack_size == writer->stack_current) {
+    if (writer->stack_size == writer->stack_current + 1) {
         size_t newsize = writer->stack_size + AJSON_STACK_SIZE;
         char *stack = realloc(writer->stack, newsize);
 
