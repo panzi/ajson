@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
                         "\t-e, --encoding=ENCODING    input encoding: 'UTF-8' (default) or 'LATIN-1'\n"
                         "\t-b, --buffer-size=SIZE     size of read buffer in bytes (default: %d)\n"
                         "\t-r, --read=METHOD          read method: 'fgets' (default) or 'fread'\n",
-                        argc > 0 ? argv[0] : "prettyprint", BUFSIZ);
+                        argc > 0 ? argv[0] : "tokens", BUFSIZ);
             return 0;
 
         case 'i':

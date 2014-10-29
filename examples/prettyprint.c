@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
             printf(
                         "usage: %s [options] [input-file]\n"
                         "\n"
+                        "OPTIONS:\n"
                         "\t-h, --help                 print this help message\n"
                         "\t-i, --integer              parse numbers without decimals or exponent as 64bit integers\n"
                         "\t-e, --encoding=ENCODING    input encoding 'UTF-8' (default) or 'LATIN-1'\n"
