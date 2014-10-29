@@ -11,7 +11,7 @@
     (PARSER)->value.error.lineno   = __LINE__;
 
 static inline int _ajson_push(ajson_parser *parser, uintptr_t state) {
-    if (parser->stack_current + 1 == parser->buffer_size) {
+    if (parser->stack_current + 1 == parser->stack_size) {
         size_t newsize = parser->stack_size + AJSON_STACK_SIZE;
         uintptr_t *stack = SIZE_MAX/sizeof(uintptr_t) < newsize ? NULL : realloc(parser->stack, sizeof(uintptr_t) * newsize);
         if (stack == NULL) {
@@ -25,7 +25,7 @@ static inline int _ajson_push(ajson_parser *parser, uintptr_t state) {
     return 0;
 }
 #define ajson_push(parser, state) \
-    (parser->stack_current + 1 == parser->buffer_size ? \
+    (parser->stack_current + 1 == parser->stack_size ? \
         _ajson_push(parser, state) : \
         ((int)(parser->stack[parser->stack_current ++] = state), 0))
 
