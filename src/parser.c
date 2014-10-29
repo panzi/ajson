@@ -27,7 +27,7 @@ static inline int _ajson_push(ajson_parser *parser, uintptr_t state) {
 #define ajson_push(parser, state) \
     (parser->stack_current + 1 == parser->buffer_size ? \
         _ajson_push(parser, state) : \
-        (int)(parser->stack[parser->stack_current ++] = state), 0)
+        ((int)(parser->stack[parser->stack_current ++] = state), 0))
 
 static inline int ajson_buffer_ensure(ajson_parser *parser, size_t space) {
     size_t needed = parser->buffer_used + space;
@@ -62,9 +62,9 @@ static inline int _ajson_buffer_putc(ajson_parser *parser, char ch) {
     return 0;
 }
 #define ajson_buffer_putc(parser, ch) \
-    (parser->buffer_size == parser->buffer_used ? \
+    (parser->buffer_used == parser->buffer_size ? \
         _ajson_buffer_putc(parser, ch) : \
-        (parser->buffer[parser->buffer_used ++] = ch), 0)
+        ((parser->buffer[parser->buffer_used ++] = ch), 0))
 
 static inline int ajson_buffer_putcp(ajson_parser *parser, uint32_t codepoint) {
     if (codepoint < 0x80) {
@@ -414,7 +414,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                             RAISE_ERROR(AJSON_ERROR_PARSER_UNICODE);
                         }
                     }
-                    else if (ajson_buffer_putc(parser, ch) != 0) {
+                    else if (ajson_buffer_putcp(parser, ch) != 0) {
                         RAISE_ERROR(AJSON_ERROR_MEMORY);
                     }
                 }
