@@ -16,7 +16,7 @@
  */
 
 /*
- * The performance test code is copied from yajl (which is much faster than this):
+ * The performance test code is copied from yajl:
  * http://lloyd.github.io/yajl/
  */
 
@@ -54,66 +54,68 @@ static double mygettime(void) {
 #define PARSE_TIME_SECS 3
 
 static int
-parse_doc(ajson_parser *parser, const char **doc)
-{
-    ajson_clear(parser);
-    if (ajson_feed(parser, *doc, strlen(*doc)) != 0) {
-        return 1;
-    }
-
-    ++ doc;
-
-    for (;;) {
-        enum ajson_token token = ajson_next_token(parser);
-
-        switch (token) {
-        case AJSON_TOK_ERROR:
-            return 2;
-
-        case AJSON_TOK_NEED_DATA:
-            if (*doc) {
-                if (ajson_feed(parser, *doc, strlen(*doc)) != 0) {
-                    return 1;
-                }
-                ++ doc;
-            }
-            else {
-                // signal that I don't have any more data
-                ajson_feed(parser, "", 0);
-            }
-            break;
-
-        case AJSON_TOK_END:
-            return 0;
-
-        default:
-            break;
-        }
-    }
-}
-
-static int
 run(int flags)
 {
     long long times = 0; 
     double starttime;
+    size_t sumsize = 0;
 
     starttime = mygettime();
 
     /* allocate a parser */
     for (;;) {
-        int i;
         {
             double now = mygettime();
             if (now - starttime >= PARSE_TIME_SECS) break;
         }
 
-        for (i = 0; i < 100; i++) {
+        for (int i = 0; i < 100; i++) {
             ajson_parser parser;
             if (ajson_init(&parser, flags, AJSON_ENC_UTF8) != 0) {
                 return 1;
             }
-            int stat = parse_doc(&parser, get_doc(times % num_docs()));
+
+            int stat = -1;
+            {
+                const char **doc = get_doc(times % num_docs());
+
+                ajson_clear(&parser);
+                if (ajson_feed(&parser, *doc, strlen(*doc)) != 0) {
+                    stat = 1;
+                }
+                else {
+                    ++ doc;
+
+                    while (stat == -1) {
+                        enum ajson_token token = ajson_next_token(&parser);
+
+                        if (token == AJSON_TOK_ERROR) {
+                            stat = 2;
+                        }
+                        else if (token == AJSON_TOK_NEED_DATA) {
+                            if (*doc) {
+                                size_t size = strlen(*doc);
+                                if (ajson_feed(&parser, *doc, size) != 0) {
+                                    stat = 1;
+                                }
+                                else {
+                                    sumsize += size;
+                                    ++ doc;
+                                }
+                            }
+                            else {
+                                // signal that I don't have any more data
+                                if (ajson_feed(&parser, "", 0) != 0) {
+                                    stat = 1;
+                                }
+                            }
+                        }
+                        else if (token == AJSON_TOK_END) {
+                            stat = 0;
+                        }
+                    }
+                }
+            }
 
             if (stat != 0) {
                 if (stat == 2) {
@@ -137,14 +139,10 @@ run(int flags)
         double now;
         const char * all_units[] = { "B/s", "KB/s", "MB/s", (char *) 0 };
         const char ** units = all_units;
-        int i, avg_doc_size = 0;
 
         now = mygettime();
 
-        for (i = 0; i < num_docs(); i++) avg_doc_size += doc_size(i);
-        avg_doc_size /= num_docs();
-
-        throughput = (times * avg_doc_size) / (now - starttime);
+        throughput = sumsize / (now - starttime);
         
         while (*(units + 1) && throughput > 1024) {
             throughput /= 1024;
