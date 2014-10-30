@@ -11,10 +11,11 @@ unsigned int ajson_version_patch() { return AJSON_VERSION_PATCH; }
 
 int ajson_get_flags(const ajson_parser *parser) { return parser->flags; }
 
-bool        ajson_get_boolean(const ajson_parser *parser) { return parser->value.boolean; }
-double      ajson_get_number (const ajson_parser *parser) { return parser->value.number;  }
-int64_t     ajson_get_integer(const ajson_parser *parser) { return parser->value.integer; }
-const char* ajson_get_string (const ajson_parser *parser) { return parser->value.string;  }
+bool        ajson_get_boolean      (const ajson_parser *parser) { return parser->value.boolean; }
+double      ajson_get_number       (const ajson_parser *parser) { return parser->value.number;  }
+int64_t     ajson_get_integer      (const ajson_parser *parser) { return parser->value.integer; }
+const char* ajson_get_string       (const ajson_parser *parser) { return parser->value.string.value;  }
+size_t      ajson_get_string_length(const ajson_parser *parser) { return parser->value.string.length; }
 
 bool     ajson_get_components_positive         (const ajson_parser *parser) { return parser->value.components.positive;          }
 bool     ajson_get_components_exponent_positive(const ajson_parser *parser) { return parser->value.components.exponent_positive; }

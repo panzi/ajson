@@ -332,7 +332,10 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                             }
 
                             READ_NEXT_OR_EOF();
-                            RETURN_VALUE(AJSON_TOK_STRING, .string = parser->buffer);
+
+                            parser->value.string.value  = parser->buffer;
+                            parser->value.string.length = parser->buffer_used - 1;
+                            RETURN(AJSON_TOK_STRING);
                         }
                         else {
                             if (ajson_buffer_putc(parser, ch) != 0) {
@@ -610,7 +613,9 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     RAISE_ERROR(AJSON_ERROR_MEMORY);
                 }
 
-                RETURN_VALUE(AJSON_TOK_NUMBER, .string = parser->buffer);
+                parser->value.string.value  = parser->buffer;
+                parser->value.string.length = parser->buffer_used - 1;
+                RETURN(AJSON_TOK_NUMBER);
             }
             else {
                 parser->value.components.positive          = true;

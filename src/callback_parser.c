@@ -41,7 +41,7 @@ int ajson_cb_dispatch(ajson_cb_parser *parser) {
 
         case AJSON_TOK_STRING:
             if (parser->string_func)
-                parser->string_func(parser->ctx, parser->parser.value.string);
+                parser->string_func(parser->ctx, parser->parser.value.string.value, parser->parser.value.string.length);
             break;
 
         case AJSON_TOK_BEGIN_ARRAY:

@@ -11,6 +11,36 @@ enum ajson_read {
     AJSON_READ_FREAD
 };
 
+int print_string(const char *string, size_t length) {
+    ajson_writer writer;
+    if (ajson_writer_init(&writer, AJSON_WRITER_FLAG_ASCII, NULL) != 0) {
+        return 1;
+    }
+
+    char buf[BUFSIZ];
+
+    ssize_t written = ajson_write_string(&writer, buf, sizeof(buf), string, length, AJSON_ENC_UTF8);
+
+    while (written > 0) {
+        if (fwrite(buf, 1, written, stdout) < (size_t)written) {
+            perror("fwrite");
+            ajson_writer_destroy(&writer);
+            return 1;
+        }
+        if ((size_t)written < sizeof(buf)) break;
+        written = ajson_write_continue(&writer, buf, sizeof(buf));
+    }
+
+    if (written < 0) {
+        perror("ajson_write_*");
+        ajson_writer_destroy(&writer);
+        return 1;
+    }
+
+    ajson_writer_destroy(&writer);
+    return 0;
+}
+
 int tokenize(FILE* fp, const char *filename, ajson_parser *parser, char *buffer, size_t buffer_size, int flags, enum ajson_read read) {
     ajson_clear(parser);
 
@@ -30,16 +60,16 @@ int tokenize(FILE* fp, const char *filename, ajson_parser *parser, char *buffer,
 
             switch (token) {
             case AJSON_TOK_NULL:
-                printf("TOK: null\n");
+                printf("null\n");
                 break;
 
             case AJSON_TOK_BOOLEAN:
-                printf("TOK: boolean: %s\n", parser->value.boolean ? "true" : "false");
+                printf("boolean: %s\n", parser->value.boolean ? "true" : "false");
                 break;
 
             case AJSON_TOK_NUMBER:
                 if (flags & AJSON_FLAG_NUMBER_COMPONENTS) {
-                    printf("TOK: number: isinteger: %s, positive: %s, integer: %" PRIu64 ", decimal: %" PRIu64 ", decimal_places: %" PRIu64 ", exponent_positive: %s, exponent: %" PRIu64 "\n",
+                    printf("number: isinteger: %s, positive: %s, integer: %" PRIu64 ", decimal: %" PRIu64 ", decimal_places: %" PRIu64 ", exponent_positive: %s, exponent: %" PRIu64 "\n",
                            parser->value.components.isinteger ? "true" : "false",
                            parser->value.components.positive  ? "true" : "false",
                            parser->value.components.integer,
@@ -49,44 +79,52 @@ int tokenize(FILE* fp, const char *filename, ajson_parser *parser, char *buffer,
                            parser->value.components.exponent);
                 }
                 else if (flags & AJSON_FLAG_NUMBER_AS_STRING) {
-                    printf("TOK: number: %s\n", parser->value.string);
+                    printf("number: ");
+                    if (print_string(parser->value.string.value, parser->value.string.length) != 0) {
+                        return 1;
+                    }
+                    printf("\n");
                 }
                 else {
-                    printf("TOK: number: %.16g\n", parser->value.number);
+                    printf("number: %.16g\n", parser->value.number);
                 }
                 break;
 
             case AJSON_TOK_INTEGER:
-                printf("TOK: integer: %ld\n", parser->value.integer);
+                printf("integer: %ld\n", parser->value.integer);
                 break;
 
             case AJSON_TOK_STRING:
-                printf("TOK: string: %s\n", parser->value.string);
+                printf("string: ");
+                if (print_string(parser->value.string.value, parser->value.string.length) != 0) {
+                    return 1;
+                }
+                printf("\n");
                 break;
 
             case AJSON_TOK_BEGIN_ARRAY:
-                printf("TOK: [\n");
+                printf("[\n");
                 break;
 
             case AJSON_TOK_END_ARRAY:
-                printf("TOK: ]\n");
+                printf("]\n");
                 break;
 
             case AJSON_TOK_BEGIN_OBJECT:
-                printf("TOK: {\n");
+                printf("{\n");
                 break;
 
             case AJSON_TOK_END_OBJECT:
-                printf("TOK: }\n");
+                printf("}\n");
                 break;
 
             case AJSON_TOK_END:
-                printf("TOK: END\n");
+                printf("end\n");
                 has_tokens = false;
                 break;
 
             case AJSON_TOK_ERROR:
-                printf("TOK: error\n");
+                printf("error: %d\n", parser->value.error.error);
                 fprintf(stderr, "%s: ajson_parse: %s\n", filename, ajson_error_str(parser->value.error.error));
                 fprintf(stderr, "%s:%zu: %s: error raised here\n", parser->value.error.filename, parser->value.error.lineno, parser->value.error.function);
                 return 1;
@@ -128,7 +166,7 @@ int main(int argc, char *argv[]) {
     bool                parser_needs_freeing = false;
     size_t              buffer_size = BUFSIZ;
     char*               buffer      = NULL;
-    enum ajson_read     read        = AJSON_READ_FGETS;
+    enum ajson_read     read        = AJSON_READ_FREAD;
 
     for (;;) {
         int opt = getopt_long(argc, argv, "hie:aI:nb:r:", long_options, NULL);
@@ -148,7 +186,7 @@ int main(int argc, char *argv[]) {
                         "\t-s, --numbers-as-string    parse numbers as string\n"
                         "\t-e, --encoding=ENCODING    input encoding: 'UTF-8' (default) or 'LATIN-1'\n"
                         "\t-b, --buffer-size=SIZE     size of read buffer in bytes (default: %d)\n"
-                        "\t-r, --read=METHOD          read method: 'fgets' (default) or 'fread'\n",
+                        "\t-r, --read=METHOD          read method: 'fread' (default) or 'fgets'\n",
                         argc > 0 ? argv[0] : "tokens", BUFSIZ);
             return 0;
 

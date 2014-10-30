@@ -94,7 +94,10 @@ struct ajson_parser_s {
             uint16_t  unit2;
         } utf16;
         unsigned char utf8[4];
-        const char   *string;
+        struct {
+            const char *value;
+            size_t      length;
+        } string;
         struct {
             enum ajson_error error;
             const char      *filename;
@@ -122,10 +125,11 @@ AJSON_EXPORT void          ajson_free (ajson_parser *parser);
 
 AJSON_EXPORT int ajson_get_flags(const ajson_parser *parser);
 
-AJSON_EXPORT bool        ajson_get_boolean(const ajson_parser *parser);
-AJSON_EXPORT double      ajson_get_number (const ajson_parser *parser);
-AJSON_EXPORT int64_t     ajson_get_integer(const ajson_parser *parser);
-AJSON_EXPORT const char* ajson_get_string (const ajson_parser *parser);
+AJSON_EXPORT bool        ajson_get_boolean      (const ajson_parser *parser);
+AJSON_EXPORT double      ajson_get_number       (const ajson_parser *parser);
+AJSON_EXPORT int64_t     ajson_get_integer      (const ajson_parser *parser);
+AJSON_EXPORT const char* ajson_get_string       (const ajson_parser *parser);
+AJSON_EXPORT size_t      ajson_get_string_length(const ajson_parser *parser);
 
 AJSON_EXPORT bool     ajson_get_components_positive         (const ajson_parser *parser);
 AJSON_EXPORT bool     ajson_get_components_exponent_positive(const ajson_parser *parser);
@@ -146,7 +150,7 @@ typedef int (*ajson_boolean_func)     (void *ctx, bool        value);
 typedef int (*ajson_number_func)      (void *ctx, double      value);
 typedef int (*ajson_components_func)  (void *ctx, bool positive, uint64_t integer, uint64_t decimal, uint64_t decimal_places, bool exponent_positive, uint64_t exponent);
 typedef int (*ajson_integer_func)     (void *ctx, int64_t     value);
-typedef int (*ajson_string_func)      (void *ctx, const char* value);
+typedef int (*ajson_string_func)      (void *ctx, const char* value, size_t length);
 typedef int (*ajson_begin_array_func) (void *ctx);
 typedef int (*ajson_end_array_func)   (void *ctx);
 typedef int (*ajson_begin_object_func)(void *ctx);
@@ -212,6 +216,7 @@ struct ajson_writer_s {
         } integer;
         struct {
             const char         *value;
+            const char         *end;
             enum ajson_encoding encoding;
             union {
                 size_t       count;
@@ -236,7 +241,7 @@ AJSON_EXPORT ssize_t ajson_write_null   (ajson_writer *writer, void *buffer, siz
 AJSON_EXPORT ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool        value);
 AJSON_EXPORT ssize_t ajson_write_number (ajson_writer *writer, void *buffer, size_t size, double      value);
 AJSON_EXPORT ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int64_t     value);
-AJSON_EXPORT ssize_t ajson_write_string (ajson_writer *writer, void *buffer, size_t size, const char* value, enum ajson_encoding encoding);
+AJSON_EXPORT ssize_t ajson_write_string (ajson_writer *writer, void *buffer, size_t size, const char* value, size_t length, enum ajson_encoding encoding);
 AJSON_EXPORT ssize_t ajson_write_string_latin1(ajson_writer *writer, void *buffer, size_t size, const char* value);
 AJSON_EXPORT ssize_t ajson_write_string_utf8  (ajson_writer *writer, void *buffer, size_t size, const char* value);
 

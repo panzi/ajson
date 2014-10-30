@@ -135,7 +135,7 @@ ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int
     return _ajson_write_prelude(writer, buffer, size, 0);
 }
 
-ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, const char* value, enum ajson_encoding encoding) {
+ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, const char* value, size_t length, enum ajson_encoding encoding) {
     if (size == 0 || size > SSIZE_MAX || !value) {
         errno = EINVAL;
         return -1;
@@ -144,16 +144,17 @@ ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, cons
     writer->next_write_func = &_ajson_write_string;
     writer->state           = 0;
     writer->value.string.value    = value;
+    writer->value.string.end      = value + length;
     writer->value.string.encoding = encoding;
     return _ajson_write_prelude(writer, buffer, size, 0);
 }
 
 ssize_t ajson_write_string_latin1(ajson_writer *writer, void *buffer, size_t size, const char* value) {
-    return ajson_write_string(writer, buffer, size, value, AJSON_ENC_LATIN1);
+    return ajson_write_string(writer, buffer, size, value, strlen(value), AJSON_ENC_LATIN1);
 }
 
 ssize_t ajson_write_string_utf8(ajson_writer *writer, void *buffer, size_t size, const char* value) {
-    return ajson_write_string(writer, buffer, size, value, AJSON_ENC_UTF8);
+    return ajson_write_string(writer, buffer, size, value, strlen(value), AJSON_ENC_UTF8);
 }
 
 ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size) {
@@ -452,11 +453,8 @@ ssize_t _ajson_write_string(ajson_writer *writer, unsigned char *buffer, size_t 
 
     WRITE_CHAR('"');
 
-    for (;;) {
+    while (writer->value.string.value != writer->value.string.end) {
         unsigned char ch = *writer->value.string.value;
-
-        if (!ch)
-            break;
 
         if (ch == '"') {
             WRITE_STR("\\\"");

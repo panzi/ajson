@@ -69,6 +69,9 @@ else:
 _Ints = tuple(_Ints)
 _Lists = (list, tuple)
 
+ENC_LATIN1 = 0
+ENC_UTF8   = 1
+
 FLAG_INTEGER           = 1
 FLAG_NUMBER_COMPONENTS = 2
 FLAG_NUMBER_AS_STRING  = 4
@@ -189,7 +192,7 @@ class Parser(object):
 						_ajson_get_components_exponent(ptr)
 					)
 			elif flags & FLAG_NUMBER_AS_STRING:
-				return token, _ajson_get_string(ptr)
+				return token, _ajson_get_string(ptr)[:_ajson_get_string_length(ptr)].decode('utf-8')
 			else:
 				return token, _ajson_get_number(ptr)
 
@@ -197,7 +200,7 @@ class Parser(object):
 			return token, _ajson_get_integer(ptr)
 
 		elif token == TOK_STRING:
-			return token, _ajson_get_string(ptr).decode('utf-8')
+			return token, _ajson_get_string(ptr)[:_ajson_get_string_length(ptr)].decode('utf-8')
 
 		elif token == TOK_END:
 			raise StopIteration
@@ -337,7 +340,11 @@ _ajson_get_integer.restype  = ctypes.c_int64
 
 _ajson_get_string = _lib.ajson_get_string
 _ajson_get_string.argtypes = [_ParserPtr]
-_ajson_get_string.restype  = ctypes.c_char_p
+_ajson_get_string.restype  = ctypes.POINTER(ctypes.c_char)
+
+_ajson_get_string_length = _lib.ajson_get_string_length
+_ajson_get_string_length.argtypes = [_ParserPtr]
+_ajson_get_string_length.restype  = ctypes.c_size_t
 
 _ajson_get_components_positive = _lib.ajson_get_components_positive
 _ajson_get_components_positive.argtypes = [_ParserPtr]
@@ -407,9 +414,9 @@ _ajson_write_integer = _lib.ajson_write_integer
 _ajson_write_integer.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int64]
 _ajson_write_integer.restype  = ctypes.c_ssize_t
 
-_ajson_write_string_utf8 = _lib.ajson_write_string_utf8
-_ajson_write_string_utf8.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_char_p]
-_ajson_write_string_utf8.restype  = ctypes.c_ssize_t
+_ajson_write_string = _lib.ajson_write_string_utf8
+_ajson_write_string.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t, ctypes.c_int]
+_ajson_write_string.restype  = ctypes.c_ssize_t
 
 _ajson_write_begin_array = _lib.ajson_write_begin_array
 _ajson_write_begin_array.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t]
@@ -498,7 +505,8 @@ class Writer(WriterBase):
 
 	@_make_write_func
 	def string(ptr, buffer, size, value):
-		return _ajson_write_string_utf8(ptr, buffer, size, value.encode('utf-8'))
+		buf = value.encode('utf-8')
+		return _ajson_write_string(ptr, buffer, size, buf, len(buf), ENC_UTF8)
 
 	def value(self,obj):
 		refs = set()
@@ -609,7 +617,8 @@ class FileWriter(WriterBase):
 
 	@_make_file_write_func
 	def string(ptr, buffer, size, value):
-		return _ajson_write_string_utf8(ptr, buffer, size, value.encode('utf-8'))
+		buf = value.encode('utf-8')
+		return _ajson_write_string(ptr, buffer, size, buf, len(buf), ENC_UTF8)
 
 	def value(self,obj):
 		refs = set()

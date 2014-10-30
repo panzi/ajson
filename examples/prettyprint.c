@@ -4,6 +4,11 @@
 #include <string.h>
 #include <getopt.h>
 
+enum ajson_read {
+    AJSON_READ_FGETS,
+    AJSON_READ_FREAD
+};
+
 int main(int argc, char *argv[]) {
     struct option long_options[] = {
         {"help",     no_argument,       0, 'h'},
@@ -12,6 +17,7 @@ int main(int argc, char *argv[]) {
         {"ascii",    no_argument,       0, 'a'},
         {"indent",   required_argument, 0, 'I'},
         {"ugly",     no_argument,       0, 'u'},
+        {"read",     required_argument, 0, 'r'},
         {0,          0,                 0,  0 }
     };
 
@@ -20,6 +26,7 @@ int main(int argc, char *argv[]) {
     int          writer_flags = AJSON_WRITER_FLAGS_NONE;
     const char*  indent = "\t";
     enum ajson_encoding encoding = AJSON_ENC_UTF8;
+    enum ajson_read     read     = AJSON_READ_FREAD;
     ajson_parser parser;
     ajson_writer writer;
 
@@ -40,7 +47,8 @@ int main(int argc, char *argv[]) {
                         "\t-e, --encoding=ENCODING    input encoding 'UTF-8' (default) or 'LATIN-1'\n"
                         "\t-a, --ascii                produce ASCII compatible output\n"
                         "\t-I, --indent=INDENT        use INDENT as indentation (default: $'\\t')\n"
-                        "\t-u, --ugly                 don't pretty print\n",
+                        "\t-u, --ugly                 don't pretty print\n"
+                        "\t-r, --read=METHOD          read method: 'fread' (default) or 'fgets'\n",
                         argc > 0 ? argv[0] : "prettyprint");
             return 0;
 
@@ -71,6 +79,19 @@ int main(int argc, char *argv[]) {
 
         case 'u':
             indent = NULL;
+            break;
+
+        case 'r':
+            if (strcasecmp(optarg, "fgets") == 0) {
+                read = AJSON_READ_FGETS;
+            }
+            else if (strcasecmp(optarg, "fread") == 0) {
+                read = AJSON_READ_FREAD;
+            }
+            else {
+                fprintf(stderr, "*** invalid read method: %s\n", optarg);
+                return 1;
+            }
             break;
 
         case '?':
@@ -107,7 +128,9 @@ int main(int argc, char *argv[]) {
     char outbuf[BUFSIZ];
 
     for (;;) {
-        size_t size = fgets(inbuf, sizeof(inbuf), fp) ? strlen(inbuf) : 0;
+        size_t size = read == AJSON_READ_FGETS ?
+            (fgets(inbuf, sizeof(inbuf), fp) ? strlen(inbuf) : 0) :
+            fread(inbuf, 1, sizeof(inbuf), fp);
 
         if (ajson_feed(&parser, inbuf, size) != 0) {
             perror("ajson_feed");
@@ -140,7 +163,7 @@ int main(int argc, char *argv[]) {
                 break;
 
             case AJSON_TOK_STRING:
-                written = ajson_write_string_utf8(&writer, outbuf, sizeof(outbuf), parser.value.string);
+                written = ajson_write_string(&writer, outbuf, sizeof(outbuf), parser.value.string.value, parser.value.string.length, AJSON_ENC_UTF8);
                 break;
 
             case AJSON_TOK_BEGIN_ARRAY:
