@@ -414,7 +414,7 @@ _ajson_write_integer = _lib.ajson_write_integer
 _ajson_write_integer.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int64]
 _ajson_write_integer.restype  = ctypes.c_ssize_t
 
-_ajson_write_string = _lib.ajson_write_string_utf8
+_ajson_write_string = _lib.ajson_write_string
 _ajson_write_string.argtypes = [_WriterPtr, ctypes.c_void_p, ctypes.c_size_t, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t, ctypes.c_int]
 _ajson_write_string.restype  = ctypes.c_ssize_t
 
