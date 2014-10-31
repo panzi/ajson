@@ -88,7 +88,7 @@ int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding) {
     return 0;
 }
 
-void ajson_clear(ajson_parser *parser) {
+void ajson_reset(ajson_parser *parser) {
     if (parser->stack) parser->stack[0] = 0;
     parser->stack_current = 0;
     parser->buffer_used   = 0;

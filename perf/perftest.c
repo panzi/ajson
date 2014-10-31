@@ -79,7 +79,7 @@ run(int flags)
             {
                 const char **doc = get_doc(times % num_docs());
 
-                ajson_clear(&parser);
+                ajson_reset(&parser);
                 if (ajson_feed(&parser, *doc, strlen(*doc)) != 0) {
                     stat = 1;
                 }

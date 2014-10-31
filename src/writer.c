@@ -438,16 +438,6 @@ ssize_t _ajson_write_integer(ajson_writer *writer, unsigned char *buffer, size_t
     END_DISPATCH;
 }
 
-// return length of string, but at most return 4 (don't scan the whole string)
-// this is useful in combination with ajson_decode_utf8, which needs a size but never reads more than 4 bytes
-static inline size_t ajson_strlen4(const char* str) {
-    if (!str[0]) return 0;
-    if (!str[1]) return 1;
-    if (!str[2]) return 2;
-    if (!str[3]) return 3;
-    return 4;
-}
-
 ssize_t _ajson_write_string(ajson_writer *writer, unsigned char *buffer, size_t size, size_t index) {
     BEGIN_DISPATCH;
 
@@ -501,7 +491,7 @@ ssize_t _ajson_write_string(ajson_writer *writer, unsigned char *buffer, size_t 
         }
         else {
             uint32_t codepoint = 0;
-            int count = ajson_decode_utf8((const unsigned char*)writer->value.string.value, ajson_strlen4(writer->value.string.value), &codepoint);
+            int count = ajson_decode_utf8((const unsigned char*)writer->value.string.value, writer->value.string.end - writer->value.string.value, &codepoint);
             if (count <= 0) {
                 RAISE_ERROR();
             }

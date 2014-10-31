@@ -115,7 +115,7 @@ AJSON_EXPORT unsigned int ajson_version_minor();
 AJSON_EXPORT unsigned int ajson_version_patch();
 
 AJSON_EXPORT int              ajson_init      (ajson_parser *parser, int flags, enum ajson_encoding encoding);
-AJSON_EXPORT void             ajson_clear     (ajson_parser *parser);
+AJSON_EXPORT void             ajson_reset     (ajson_parser *parser);
 AJSON_EXPORT void             ajson_destroy   (ajson_parser *parser);
 AJSON_EXPORT int              ajson_feed      (ajson_parser *parser, const void *buffer, size_t size);
 AJSON_EXPORT enum ajson_token ajson_next_token(ajson_parser *parser);
