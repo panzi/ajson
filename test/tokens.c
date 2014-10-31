@@ -86,7 +86,7 @@ int tokenize(FILE* fp, const char *filename, ajson_parser *parser, char *buffer,
                     printf("\n");
                 }
                 else {
-                    printf("number: %.17g\n", parser->value.number);
+                    printf("number: %.16g\n", parser->value.number);
                 }
                 break;
 
