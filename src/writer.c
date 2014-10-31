@@ -372,7 +372,7 @@ ssize_t _ajson_write_number(ajson_writer *writer, unsigned char *buffer, size_t 
 
         if (nfree >= sizeof(writer->value.number.buffer)) {
             // this code path saves one memcpy
-            int count = snprintf((char*)buffer + index, nfree, "%.16g", writer->value.number.value);
+            int count = snprintf((char*)buffer + index, nfree, "%.17g", writer->value.number.value);
             if (count < 0) {
                 RAISE_ERROR();
             }
@@ -386,7 +386,7 @@ ssize_t _ajson_write_number(ajson_writer *writer, unsigned char *buffer, size_t 
         else {
             writer->value.number.written = 0;
 
-            int count = snprintf(writer->value.number.buffer, sizeof(writer->value.number.buffer), "%.16g", writer->value.number.value);
+            int count = snprintf(writer->value.number.buffer, sizeof(writer->value.number.buffer), "%.17g", writer->value.number.value);
             if (count < 0) {
                 RAISE_ERROR();
             }
