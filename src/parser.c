@@ -13,7 +13,7 @@
 static inline int _ajson_push(ajson_parser *parser, uintptr_t state) {
     if (parser->stack_current + 1 == parser->stack_size) {
         size_t newsize = parser->stack_size + AJSON_STACK_SIZE;
-        uintptr_t *stack = SIZE_MAX/sizeof(uintptr_t) < newsize ? NULL : realloc(parser->stack, sizeof(uintptr_t) * newsize);
+        uintptr_t *stack = SIZE_MAX / sizeof(uintptr_t) < newsize ? NULL : realloc(parser->stack, sizeof(uintptr_t) * newsize);
         if (stack == NULL) {
             AJSON_SET_ERROR(parser, AJSON_ERROR_MEMORY);
             return -1;
@@ -634,7 +634,8 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                 if (CURR_CH() >= '1' && CURR_CH() <= '9') {
                     do {
                         int digit = CURR_CH() - '0';
-                        if ((UINT64_MAX - digit) / 10 < parser->value.components.integer) {
+                        if ((UINT64_MAX - 9)     / 10 < parser->value.components.integer && // try to avoid runtime division
+                            (UINT64_MAX - digit) / 10 < parser->value.components.integer) {
                             // number is not a 64bit integer -> parse floating point number
                             parser->value.components.isinteger = false;
 
@@ -675,7 +676,8 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
 
                     do {
                         int digit = CURR_CH() - '0';
-                        if ((UINT64_MAX - digit) / 10 < parser->value.components.decimal ||
+                        if (((UINT64_MAX - 9)     / 10 < parser->value.components.decimal && // try to avoid runtime division
+                             (UINT64_MAX - digit) / 10 < parser->value.components.decimal) ||
                             parser->value.components.decimal_places == INT64_MAX) {
                             // round next digit
                             if (digit >= 5 && parser->value.components.decimal < UINT64_MAX) {
@@ -714,7 +716,8 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
 
                     do {
                         int digit = CURR_CH() - '0';
-                        if ((UINT64_MAX - digit) / 10 < parser->value.components.exponent) {
+                        if ((UINT64_MAX - 9)     / 10 < parser->value.components.exponent && // try to avoid runtime division
+                            (UINT64_MAX - digit) / 10 < parser->value.components.exponent) {
                             // this will emit infinity or zero (for negative exponents)
                             parser->value.components.exponent = UINT64_MAX;
                             do {
