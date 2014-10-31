@@ -144,13 +144,16 @@ class Parser(object):
 	__slots__ = '_parser', '_data'
 
 	def __init__(self,flags=FLAGS_NONE):
-		self._parser = _ajson_alloc(flags)
+		self._parser = _ajson_alloc(flags, ENC_UTF8)
 		self._data   = None
 		if not self._parser:
 			_error_from_errno()
 
 	def __del__(self):
 		_ajson_free(self._parser)
+
+	def reset(self):
+		_ajson_reset(self._parser)
 
 	@property
 	def flags(self):
@@ -307,8 +310,12 @@ _ajson_version_patch.argtypes = []
 _ajson_version_patch.restype  = ctypes.c_uint
 
 _ajson_alloc = _lib.ajson_alloc
-_ajson_alloc.argtypes = [ctypes.c_int]
+_ajson_alloc.argtypes = [ctypes.c_int, ctypes.c_int]
 _ajson_alloc.restype  = _ParserPtr
+
+_ajson_reset = _lib.ajson_reset
+_ajson_reset.argtypes = [_ParserPtr]
+_ajson_reset.restype  = None
 
 _ajson_free = _lib.ajson_free
 _ajson_free.argtypes = [_ParserPtr]
@@ -319,8 +326,8 @@ _ajson_feed.argtypes = [_ParserPtr, ctypes.c_void_p, ctypes.c_size_t]
 _ajson_feed.restype  = ctypes.c_int
 
 _ajson_next_token = _lib.ajson_next_token
-_ajson_feed.argtypes = [_ParserPtr]
-_ajson_feed.restype  = ctypes.c_int
+_ajson_next_token.argtypes = [_ParserPtr]
+_ajson_next_token.restype  = ctypes.c_int
 
 _ajson_get_flags = _lib.ajson_get_flags
 _ajson_get_flags.argtypes = [_ParserPtr]
