@@ -42,7 +42,7 @@ int print_string(const char *string, size_t length) {
 }
 
 int tokenize(FILE* fp, const char *filename, ajson_parser *parser, char *buffer, size_t buffer_size, int flags, enum ajson_read read) {
-    ajson_clear(parser);
+    ajson_reset(parser);
 
     for (;;) {
         size_t size = read == AJSON_READ_FGETS ?
@@ -86,7 +86,7 @@ int tokenize(FILE* fp, const char *filename, ajson_parser *parser, char *buffer,
                     printf("\n");
                 }
                 else {
-                    printf("number: %.16g\n", parser->value.number);
+                    printf("number: %.17g\n", parser->value.number);
                 }
                 break;
 

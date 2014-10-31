@@ -1,6 +1,6 @@
 include_directories("${PROJECT_SOURCE_DIR}/src")
 
-set(AJSON_EXAMPLES prettyprint tokens)
+set(AJSON_EXAMPLES prettyprint)
 
 foreach(example ${AJSON_EXAMPLES})
 	add_executable(${example} ${example}.c)

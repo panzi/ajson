@@ -105,13 +105,6 @@ if(BUILD_PERF)
 endif()
 
 if(BUILD_TESTS)
-	include(CTest)
-
-	enable_testing()
-
-	set(CTEST_MEMORYCHECK_COMMAND "valgrind")
-	set(CTEST_MEMORYCHECK_COMMAND_OPTIONS "-v --leak-check=full")
-
 	add_subdirectory(test)
 endif()
 
