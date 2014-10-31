@@ -1,0 +1,40 @@
+{
+string: "foo"
+string: "bar"
+string: "\n\r\t\f\b\n\"\\"
+number: 0
+string: "\t"
+[
+number: 1
+null
+boolean: false
+boolean: true
+string: ""
+{
+string: "x"
+{
+string: "y"
+null
+}
+}
+]
+string: "bla bla bla"
+[
+[
+[
+]
+]
+[
+string: ""
+number: 500000
+{
+}
+]
+]
+string: "[]{},null:false -21 true"
+[
+[
+]
+]
+}
+end

@@ -1,0 +1,15 @@
+[
+string: "\t"
+string: "\f"
+string: "\b"
+string: "\r"
+string: "\n"
+string: "\\"
+string: "\""
+string: "/"
+string: "\u0000"
+string: "\n"
+string: "\u00e4"
+string: "\ud87e\uddde"
+]
+end

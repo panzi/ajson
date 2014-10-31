@@ -1,0 +1,2 @@
+string: "a\u0000b"
+end
