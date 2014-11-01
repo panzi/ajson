@@ -236,7 +236,7 @@ enum ajson_named_states {
         parser->stack[parser->stack_current] = STATE_REF(ERROR); \
         return AJSON_TOK_ERROR; \
     } \
-    DISPATCH(ENTER_STATE) \
+    DISPATCH(ENTER_STATE); \
     AUTO_STATE(); \
 }
 

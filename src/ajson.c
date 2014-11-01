@@ -40,9 +40,6 @@ const char* ajson_error_str(enum ajson_error error) {
     case AJSON_ERROR_EMPTY_SATCK:
         return "empty stack";
 
-    case AJSON_ERROR_JUMP:
-        return "illegal jump";
-
     case AJSON_ERROR_PARSER_STATE:
         return "parser in error state";
 
