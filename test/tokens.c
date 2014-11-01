@@ -41,7 +41,7 @@ int print_string(const char *string, size_t length) {
     return 0;
 }
 
-int tokenize(FILE* fp, const char *filename, ajson_parser *parser, char *buffer, size_t buffer_size, int flags, enum ajson_read read) {
+int tokenize(FILE* fp, ajson_parser *parser, char *buffer, size_t buffer_size, int flags, enum ajson_read read, bool debug) {
     ajson_reset(parser);
 
     for (;;) {
@@ -124,9 +124,13 @@ int tokenize(FILE* fp, const char *filename, ajson_parser *parser, char *buffer,
                 break;
 
             case AJSON_TOK_ERROR:
-                printf("error: %d\n", parser->value.error.error);
-                fprintf(stderr, "%s: ajson_parse: %s\n", filename, ajson_error_str(parser->value.error.error));
-                fprintf(stderr, "%s:%zu: %s: error raised here\n", parser->value.error.filename, parser->value.error.lineno, parser->value.error.function);
+                printf("error: (%d) %s\n", parser->value.error.error, ajson_error_str(parser->value.error.error));
+                if (debug) {
+                    fprintf(stderr, "%s:%zu: %s: error raised here\n",
+                            parser->value.error.filename,
+                            parser->value.error.lineno,
+                            parser->value.error.function);
+                }
                 return 1;
 
             case AJSON_TOK_NEED_DATA:
@@ -156,11 +160,13 @@ int main(int argc, char *argv[]) {
         {"encoding",          required_argument, 0, 'e'},
         {"buffer-size",       required_argument, 0, 'b'},
         {"read",              required_argument, 0, 'r'},
+        {"debug",             no_argument,       0, 'd'},
         {0,                   0,                 0,  0 }
     };
 
     int  status = 0;
     int  flags  = AJSON_FLAGS_NONE;
+    bool debug  = false;
     enum ajson_encoding encoding = AJSON_ENC_UTF8;
     ajson_parser        parser;
     bool                parser_needs_freeing = false;
@@ -169,7 +175,7 @@ int main(int argc, char *argv[]) {
     enum ajson_read     read        = AJSON_READ_FREAD;
 
     for (;;) {
-        int opt = getopt_long(argc, argv, "hie:aI:nb:r:", long_options, NULL);
+        int opt = getopt_long(argc, argv, "hie:aI:nb:r:d", long_options, NULL);
 
         if (opt == -1)
             break;
@@ -186,7 +192,8 @@ int main(int argc, char *argv[]) {
                         "\t-s, --numbers-as-string    parse numbers as string\n"
                         "\t-e, --encoding=ENCODING    input encoding: 'UTF-8' (default) or 'LATIN-1'\n"
                         "\t-b, --buffer-size=SIZE     size of read buffer in bytes (default: %d)\n"
-                        "\t-r, --read=METHOD          read method: 'fread' (default) or 'fgets'\n",
+                        "\t-r, --read=METHOD          read method: 'fread' (default) or 'fgets'\n"
+                        "\t-d, --debug                print C source line of error\n",
                         argc > 0 ? argv[0] : "tokens", BUFSIZ);
             return 0;
 
@@ -238,6 +245,10 @@ int main(int argc, char *argv[]) {
             }
             break;
 
+        case 'd':
+            debug = true;
+            break;
+
         case '?':
             fprintf(stderr, "*** unknown option: -%s\n", optarg);
             return 1;
@@ -278,7 +289,7 @@ int main(int argc, char *argv[]) {
                 goto cleanup;
             }
 
-            status = tokenize(fp, argv[optind], &parser, buffer, buffer_size, flags, read);
+            status = tokenize(fp, &parser, buffer, buffer_size, flags, read, debug);
 
             fclose(fp);
 
@@ -287,7 +298,7 @@ int main(int argc, char *argv[]) {
         }
     }
     else {
-        status = tokenize(stdin, "<stdin>", &parser, buffer, buffer_size, flags, read);
+        status = tokenize(stdin, &parser, buffer, buffer_size, flags, read, debug);
     }
 
 cleanup:
