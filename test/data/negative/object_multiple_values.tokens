@@ -1,0 +1,4 @@
+{
+string: "a"
+number: 1
+error: (7) expected "," or "}"
