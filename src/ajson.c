@@ -31,38 +31,53 @@ size_t           ajson_get_error_lineno  (const ajson_parser *parser) { return p
 
 const char* ajson_error_str(enum ajson_error error) {
     switch (error) {
+    case AJSON_ERROR_NONE:
+        return "no error";
+
+    case AJSON_ERROR_MEMORY:
+        return "out of memory";
+
     case AJSON_ERROR_EMPTY_SATCK:
         return "empty stack";
 
     case AJSON_ERROR_JUMP:
         return "illegal jump";
 
-    case AJSON_ERROR_MEMORY:
-        return "out of memory";
-
-    case AJSON_ERROR_PARSER:
+    case AJSON_ERROR_PARSER_STATE:
         return "parser in error state";
 
-    case AJSON_ERROR_PARSER_UNEXPECTED:
-        return "unexpected character";
+    case AJSON_ERROR_PARSER_EXPECTED_DIGIT:
+        return "expected a decimal digit";
 
-    case AJSON_ERROR_PARSER_EXPECTED_ARRAY_END:
-        return "expected ]";
+    case AJSON_ERROR_PARSER_EXPECTED_HEX:
+        return "expected a hexadecimal digit";
 
-    case AJSON_ERROR_PARSER_EXPECTED_OBJECT_END:
-        return "expected }";
+    case AJSON_ERROR_PARSER_EXPECTED_COMMA_OR_ARRAY_END:
+        return "expected \",\" or \"]\"";
 
-    case AJSON_ERROR_PARSER_UNICODE:
+    case AJSON_ERROR_PARSER_EXPECTED_COMMA_OR_OBJECT_END:
+        return "expected \",\" or \"}\"";
+
+    case AJSON_ERROR_PARSER_EXPECTED_STRING:
+        return "expected a string";
+
+    case AJSON_ERROR_PARSER_EXPECTED_COLON:
+        return "expected \":\"";
+
+    case AJSON_ERROR_PARSER_ILLEGAL_ESCAPE:
+        return "illegal escape sequence";
+
+    case AJSON_ERROR_PARSER_ILLEGAL_UNICODE:
         return "illegal unicode codepoint";
 
     case AJSON_ERROR_PARSER_RANGE:
         return "numeric value out of range";
 
+    case AJSON_ERROR_PARSER_UNEXPECTED_CHAR:
+        return "unexpected character";
+
     case AJSON_ERROR_PARSER_UNEXPECTED_EOF:
         return "unexpected end of file";
-
-    case AJSON_ERROR_NONE:
-        return "no error";
 
     default:
         return "unknown error";
