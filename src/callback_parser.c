@@ -18,7 +18,12 @@ int ajson_cb_dispatch(ajson_cb_parser *parser) {
             break;
 
         case AJSON_TOK_NUMBER:
-            if (parser->parser.flags & AJSON_FLAG_NUMBER_COMPONENTS) {
+            if (parser->parser.flags & AJSON_FLAG_NUMBER_AS_STRING) {
+                if (parser->number_as_string_func) {
+                    parser->number_as_string_func(parser->ctx, parser->parser.value.string.value);
+                }
+            }
+            else if (parser->parser.flags & AJSON_FLAG_NUMBER_COMPONENTS) {
                 if (parser->components_func)
                     parser->components_func(parser->ctx,
                                             parser->parser.value.components.positive,

@@ -150,34 +150,36 @@ AJSON_EXPORT size_t           ajson_get_error_lineno  (const ajson_parser *parse
 
 AJSON_EXPORT const char* ajson_error_str(enum ajson_error error);
 
-typedef int (*ajson_null_func)        (void *ctx);
-typedef int (*ajson_boolean_func)     (void *ctx, bool        value);
-typedef int (*ajson_number_func)      (void *ctx, double      value);
-typedef int (*ajson_components_func)  (void *ctx, bool positive, uint64_t integer, uint64_t decimal, uint64_t decimal_places, bool exponent_positive, uint64_t exponent);
-typedef int (*ajson_integer_func)     (void *ctx, int64_t     value);
-typedef int (*ajson_string_func)      (void *ctx, const char* value, size_t length);
-typedef int (*ajson_begin_array_func) (void *ctx);
-typedef int (*ajson_end_array_func)   (void *ctx);
-typedef int (*ajson_begin_object_func)(void *ctx);
-typedef int (*ajson_end_object_func)  (void *ctx);
-typedef int (*ajson_end_func)         (void *ctx);
-typedef int (*ajson_error_func)       (void *ctx, enum ajson_error error);
+typedef int (*ajson_null_func)            (void *ctx);
+typedef int (*ajson_boolean_func)         (void *ctx, bool        value);
+typedef int (*ajson_number_func)          (void *ctx, double      value);
+typedef int (*ajson_number_as_string_func)(void *ctx, const char* value);
+typedef int (*ajson_components_func)      (void *ctx, bool positive, uint64_t integer, uint64_t decimal, uint64_t decimal_places, bool exponent_positive, uint64_t exponent);
+typedef int (*ajson_integer_func)         (void *ctx, int64_t     value);
+typedef int (*ajson_string_func)          (void *ctx, const char* value, size_t length);
+typedef int (*ajson_begin_array_func)     (void *ctx);
+typedef int (*ajson_end_array_func)       (void *ctx);
+typedef int (*ajson_begin_object_func)    (void *ctx);
+typedef int (*ajson_end_object_func)      (void *ctx);
+typedef int (*ajson_end_func)             (void *ctx);
+typedef int (*ajson_error_func)           (void *ctx, enum ajson_error error);
 
 struct ajson_cb_parser_s {
-    ajson_parser            parser;
-    void                   *ctx;
-    ajson_null_func         null_func;
-    ajson_boolean_func      boolean_func;
-    ajson_number_func       number_func;
-    ajson_components_func   components_func;
-    ajson_integer_func      integer_func;
-    ajson_string_func       string_func;
-    ajson_begin_array_func  begin_array_func;
-    ajson_end_array_func    end_array_func;
-    ajson_begin_object_func begin_object_func;
-    ajson_end_object_func   end_object_func;
-    ajson_end_func          end_func;
-    ajson_error_func        error_func;
+    ajson_parser                parser;
+    void                       *ctx;
+    ajson_null_func             null_func;
+    ajson_boolean_func          boolean_func;
+    ajson_number_as_string_func number_as_string_func;
+    ajson_number_func           number_func;
+    ajson_components_func       components_func;
+    ajson_integer_func          integer_func;
+    ajson_string_func           string_func;
+    ajson_begin_array_func      begin_array_func;
+    ajson_end_array_func        end_array_func;
+    ajson_begin_object_func     begin_object_func;
+    ajson_end_object_func       end_object_func;
+    ajson_end_func              end_func;
+    ajson_error_func            error_func;
 };
 
 typedef struct ajson_cb_parser_s ajson_cb_parser;

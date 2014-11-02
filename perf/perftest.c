@@ -16,7 +16,7 @@
  */
 
 /*
- * The performance test code is copied from yajl:
+ * The performance test code is copied and adapted from yajl:
  * http://lloyd.github.io/yajl/
  */
 
@@ -62,7 +62,6 @@ run(int flags)
 
     starttime = mygettime();
 
-    /* allocate a parser */
     for (;;) {
         {
             double now = mygettime();
