@@ -12,7 +12,8 @@ at the last data chunk. If available it used gcc's
 extension to improve the speed of the continuation of the parser function.
 
 **Note:** This library is still of beta quality and interfaces might change in an
-incompatible manner. Especially the callback based parsers interface might change.
+incompatible manner. Especially the callback based parsers interface and even the
+name of this library (and thus all symbol names) might still change.
 
 Example
 -------
