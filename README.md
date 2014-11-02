@@ -151,6 +151,7 @@ for (;;) {
 			 */
 			has_tokens = false;
 			break;
+		}
 	}
 	
 	/* End of file (or IO error, use ferror/feof for a distinction). */
