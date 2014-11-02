@@ -46,8 +46,8 @@ if (ajson_init(&parser, AJSON_FLAGS_NONE, AJSON_ENC_UTF8) != 0) {
 char buffer[BUFSIZ];
 for (;;) {
 	/* Whether the data is read synchronously or not does not matter to this
-	 * library. You just feed it data whenever you it becomes available and
-	 * then you pull out tokens until you get AJSON_TOK_END or AJSON_TOK_NEED_DATA.
+	 * library. You just feed it data whenever it becomes available and then
+	 * you pull tokens until you get AJSON_TOK_END or AJSON_TOK_NEED_DATA.
 	 */
 	size_t size = fread(buffer, sizeof(buffer), stream);
 
