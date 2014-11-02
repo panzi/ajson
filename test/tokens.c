@@ -124,7 +124,7 @@ int tokenize(FILE* fp, ajson_parser *parser, char *buffer, size_t buffer_size, i
                 break;
 
             case AJSON_TOK_ERROR:
-                printf("error: (%d) %s\n", parser->value.error.error, ajson_error_str(parser->value.error.error));
+                printf("error: %s\n", ajson_error_str(parser->value.error.error));
                 if (debug) {
                     fprintf(stderr, "%s:%zu: %s: error raised here\n",
                             parser->value.error.filename,
