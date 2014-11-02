@@ -99,17 +99,22 @@ TOK_ERROR        = 11
 
 VALUE_TOKENS = {TOK_NULL, TOK_BOOLEAN, TOK_NUMBER, TOK_INTEGER, TOK_STRING}
 
-ERROR_NONE                       =  0
-ERROR_MEMORY                     =  1
-ERROR_EMPTY_SATCK                =  2
-ERROR_JUMP                       =  3
-ERROR_PARSER                     =  4
-ERROR_PARSER_UNEXPECTED          =  5
-ERROR_PARSER_EXPECTED_ARRAY_END  =  6
-ERROR_PARSER_EXPECTED_OBJECT_END =  7
-ERROR_PARSER_UNICODE             =  8
-ERROR_PARSER_RANGE               =  9
-ERROR_PARSER_UNEXPECTED_EOF      = 10
+ERROR_NONE                                =  0
+ERROR_MEMORY                              =  1
+ERROR_EMPTY_SATCK                         =  2
+ERROR_JUMP                                =  3
+ERROR_PARSER_STATE                        =  4
+ERROR_PARSER_EXPECTED_DIGIT               =  5
+ERROR_PARSER_EXPECTED_HEX                 =  6
+ERROR_PARSER_EXPECTED_COMMA_OR_ARRAY_END  =  7
+ERROR_PARSER_EXPECTED_COMMA_OR_OBJECT_END =  8
+ERROR_PARSER_EXPECTED_STRING              =  9
+ERROR_PARSER_EXPECTED_COLON               = 10
+ERROR_PARSER_ILLEGAL_ESCAPE               = 11
+ERROR_PARSER_ILLEGAL_UNICODE              = 12
+ERROR_PARSER_RANGE                        = 13
+ERROR_PARSER_UNEXPECTED_CHAR              = 14
+ERROR_PARSER_UNEXPECTED_EOF               = 15
 
 def _error_from_errno():
 	err = get_errno()
