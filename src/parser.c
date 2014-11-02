@@ -240,7 +240,7 @@ enum ajson_named_states {
     AUTO_STATE(); \
 }
 
-#define isspace(CH) ((CH) == ' ' || (CH) == '\r' || (CH) == '\n' || (CH) == '\t')
+#define isspace(CH) ((CH) == ' ' || (CH) == '\n' || (CH) == '\r' || (CH) == '\t' || (CH) == '\f' || (CH) == '\v')
 #define isdigit(CH) ((CH) >= '0' && (CH) <= '9')
 #define isword(CH)  (isdigit(CH) || ((CH) >= 'A' && (CH) <= 'Z') || ((CH) >= 'a' && (CH) <= 'z') || (CH) == '_')
 
