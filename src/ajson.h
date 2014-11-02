@@ -18,9 +18,9 @@ extern "C" {
 
 #define AJSON_STACK_SIZE 64 // initial stack size
 
-#define AJSON_FLAG_INTEGER           1 // parse numbers with no "." as int64_t
-#define AJSON_FLAG_NUMBER_COMPONENTS 2 // don't combine numbers into doubles but return their integer, decimal, and exponent components
-#define AJSON_FLAG_NUMBER_AS_STRING  4 // don't convert number into double but instead return it as a string
+#define AJSON_FLAG_INTEGER           1 // parse numbers with no "." or exponent as int64_t
+#define AJSON_FLAG_NUMBER_COMPONENTS 2 // don't combine numbers into doubles, but return their integer, decimal, and exponent components
+#define AJSON_FLAG_NUMBER_AS_STRING  4 // don't convert numbers into doubles, but instead return it as a strings
 
 #define AJSON_FLAGS_NONE 0
 #define AJSON_FLAGS_ALL  (AJSON_FLAG_INTEGER | AJSON_FLAG_NUMBER_COMPONENTS | AJSON_FLAG_NUMBER_AS_STRING)
@@ -103,10 +103,10 @@ struct ajson_parser_s {
             size_t      length;
         } string;
         struct {
-            enum ajson_error error;
-            const char      *filename;
-            const char      *function;
-            size_t           lineno;
+            enum ajson_error error;    // error code
+            const char      *filename; // C source file where the error occured (currently always parser.c)
+            const char      *function; // C function where the error occured
+            size_t           lineno;   // line in C source file where the error occured
         } error;
     } value;
 };

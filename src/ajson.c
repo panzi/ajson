@@ -101,21 +101,24 @@ int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding) {
 }
 
 void ajson_reset(ajson_parser *parser) {
+    parser->input         = NULL;
+    parser->input_size    = 0;
+    parser->input_current = 0;
     if (parser->stack) parser->stack[0] = 0;
     parser->stack_current = 0;
     parser->buffer_used   = 0;
 }
 
 void ajson_destroy(ajson_parser *parser) {
-    free(parser->buffer);
-    parser->buffer      = NULL;
-    parser->buffer_size = 0;
-    parser->buffer_used = 0;
-
     free(parser->stack);
     parser->stack         = NULL;
     parser->stack_size    = 0;
     parser->stack_current = 0;
+
+    free(parser->buffer);
+    parser->buffer      = NULL;
+    parser->buffer_size = 0;
+    parser->buffer_used = 0;
 }
 
 int ajson_feed(ajson_parser *parser, const void *buffer, size_t size) {
