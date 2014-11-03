@@ -248,6 +248,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
     BEGIN_DISPATCH;
 
     STATE_WITH_DATA(START)
+        /* ==== start parsing ==================================================================================== */
         while (isspace(CURR_CH())) {
             READ_NEXT();
         }
@@ -265,8 +266,10 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
         DONE();
 
     STATE_WITH_DATA(VALUE)
+        /* ==== parse value ====================================================================================== */
+
         if (CURR_CH() == 't') {
-            // parse "true"
+            /* ==== parse "true" ================================================================================= */
             READ_NEXT();
             if (CURR_CH() == 'r') {
                 READ_NEXT();
@@ -282,7 +285,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
             }
         }
         else if (CURR_CH() == 'f') {
-            // parse "false"
+            /* ==== parse "false" ================================================================================ */
             READ_NEXT();
             if (CURR_CH() == 'a') {
                 READ_NEXT();
@@ -301,7 +304,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
             }
         }
         else if (CURR_CH() == 'n') {
-            // parse "null"
+            /* ==== parse "null" ================================================================================= */
             READ_NEXT();
             if (CURR_CH() == 'u') {
                 READ_NEXT();
@@ -319,7 +322,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
         else if (CURR_CH() == '"') {
             STATE(STRING)
 
-            // parse string
+            /* ==== parse string ================================================================================= */
             ajson_buffer_clear(parser);
             for (;;) {
                 READ_NEXT();
@@ -422,6 +425,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                     }
                 }
                 else {
+                    // parse escape sequence
                     READ_NEXT();
                     ch = CURR_CH();
                     if (ch == '"' || ch == '/' || ch == '\\') {
@@ -460,7 +464,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
 #define READ_UNI_HEX() \
     READ_NEXT(); \
     ch = CURR_CH(); \
-    if (ch >= '0' && ch <= '9') { \
+    if (isdigit(ch)) { \
         ch += -'0'; \
     } \
     else if (ch >= 'a' && ch <= 'f') { \
@@ -536,7 +540,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
             }
         }
         else if (CURR_CH() == '-' || isdigit(CURR_CH())) {
-            // parse number
+            /* ==== parse number ================================================================================= */
             if (parser->flags & AJSON_FLAG_NUMBER_AS_STRING) {
                 ajson_buffer_clear(parser);
 
@@ -777,7 +781,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
             }
         }
         else if (CURR_CH() == '[') {
-            // parse array
+            /* ==== parse array ================================================================================== */
             EMIT(AJSON_TOK_BEGIN_ARRAY);
 
             do {
@@ -813,7 +817,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
             RETURN(AJSON_TOK_END_ARRAY);
         }
         else if (CURR_CH() == '{') {
-            // parse object
+            /* ==== parse object ================================================================================= */
             EMIT(AJSON_TOK_BEGIN_OBJECT);
 
             do {
@@ -874,6 +878,8 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
         RAISE_ERROR(AJSON_ERROR_PARSER_UNEXPECTED_CHAR);
 
     STATE(ERROR)
+        /* ==== error ============================================================================================ */
+        // An error happened earlier. This parser needs to be reset to be usable again.
         RAISE_ERROR(AJSON_ERROR_PARSER_STATE);
 
     END_DISPATCH;
