@@ -70,46 +70,46 @@ enum ajson_error {
 };
 
 struct ajson_parser_s {
-    int                 flags;
-    enum ajson_encoding encoding;
-    const char         *input;
-    size_t              input_size;
-    size_t              input_current;
-    uintptr_t          *stack;
-    size_t              stack_size;
-    size_t              stack_current;
-    char               *buffer;
-    size_t              buffer_size;
-    size_t              buffer_used;
+    int                 flags;           //!< Parser flags.
+    enum ajson_encoding encoding;        //!< Input encoding.
+    const char         *input;           //!< Current input chunk.
+    size_t              input_size;      //!< Size of current input chunk.
+    size_t              input_current;   //!< Index of first not parsed byte in input chunk.
+    uintptr_t          *stack;           //!< @internal
+    size_t              stack_size;      //!< @internal
+    size_t              stack_current;   //!< @internal
+    char               *buffer;          //!< @internal
+    size_t              buffer_size;     //!< @internal
+    size_t              buffer_used;     //!< @internal
     union {
-        bool          boolean;
-        double        number;
-        int64_t       integer;
+        bool          boolean;           //!< Parsed boolean value.
+        double        number;            //!< Parsed number.
+        int64_t       integer;           //!< Parsed integer.
         struct {
-            bool      positive;
-            bool      exponent_positive;
-            bool      isinteger;
-            uint64_t  integer;
-            uint64_t  decimal;
-            uint64_t  decimal_places;
-            uint64_t  exponent;
-        } components;
+            bool      positive;          //!< Sign of parsed number.
+            bool      exponent_positive; //!< Sign of exponent of parsed number.
+            bool      isinteger;         //!< Whether parsed number was an integer.
+            uint64_t  integer;           //!< Integer proportion of parsed number.
+            uint64_t  decimal;           //!< Decimals of parsed number.
+            uint64_t  decimal_places;    //!< Deciaml places of parsed number.
+            uint64_t  exponent;          //!< Exponent ot parsed number.
+        } components;                    //!< Parsed number components.
         struct {
-            uint16_t  unit1;
-            uint16_t  unit2;
-        } utf16;
-        unsigned char utf8[4];
+            uint16_t  unit1;             //!< @internal
+            uint16_t  unit2;             //!< @internal
+        } utf16;                         //!< @internal
+        unsigned char utf8[4];           //!< @internal
         struct {
-            const char *value;
-            size_t      length;
-        } string;
+            const char *value;           //!< Parsed string data.
+            size_t      length;          //!< Parsed string length.
+        } string;                        //!< Parsed string.
         struct {
-            enum ajson_error error;    // error code
-            const char      *filename; // C source file where the error occured (currently always parser.c)
-            const char      *function; // C function where the error occured
-            size_t           lineno;   // line in C source file where the error occured
-        } error;
-    } value;
+            enum ajson_error error;      //!< Error code.
+            const char      *filename;   //!< C source file where the error occured (currently always "parser.c").
+            const char      *function;   //!< C function where the error occured.
+            size_t           lineno;     //!< line in C source file where the error occured.
+        } error;                         //!< Error information.
+    } value; //!< Holds the parsed value or error information.
 };
 
 typedef struct ajson_parser_s ajson_parser;
@@ -165,21 +165,21 @@ typedef int (*ajson_end_func)             (void *ctx);
 typedef int (*ajson_error_func)           (void *ctx, enum ajson_error error);
 
 struct ajson_cb_parser_s {
-    ajson_parser                parser;
-    void                       *ctx;
-    ajson_null_func             null_func;
-    ajson_boolean_func          boolean_func;
-    ajson_number_as_string_func number_as_string_func;
-    ajson_number_func           number_func;
-    ajson_components_func       components_func;
-    ajson_integer_func          integer_func;
-    ajson_string_func           string_func;
-    ajson_begin_array_func      begin_array_func;
-    ajson_end_array_func        end_array_func;
-    ajson_begin_object_func     begin_object_func;
-    ajson_end_object_func       end_object_func;
-    ajson_end_func              end_func;
-    ajson_error_func            error_func;
+    ajson_parser                parser;                //!< Token parser.
+    void                       *ctx;                   //!< Context that will be passed to callbacks.
+    ajson_null_func             null_func;             //!< Callback for @c null values.
+    ajson_boolean_func          boolean_func;          //!< Callback for boolean values.
+    ajson_number_as_string_func number_as_string_func; //!< Callback for numbers when parsed as string.
+    ajson_number_func           number_func;           //!< Callback for numbers.
+    ajson_components_func       components_func;       //!< Callback for number components.
+    ajson_integer_func          integer_func;          //!< Callback for integers.
+    ajson_string_func           string_func;           //!< Callback for strings.
+    ajson_begin_array_func      begin_array_func;      //!< Callback for array beginnings.
+    ajson_end_array_func        end_array_func;        //!< Callback for array ends.
+    ajson_begin_object_func     begin_object_func;     //!< Callback for object beginnings.
+    ajson_end_object_func       end_object_func;       //!< Callback for object ends.
+    ajson_end_func              end_func;              //!< Callback for the end of the JSON document.
+    ajson_error_func            error_func;            //!< Callback for errors.
 };
 
 typedef struct ajson_cb_parser_s ajson_cb_parser;
@@ -194,8 +194,8 @@ struct ajson_writer_s;
 typedef ssize_t (*ajson_write_func)(struct ajson_writer_s *writer, unsigned char *buffer, size_t size, size_t index);
 
 struct ajson_writer_s {
-    int              flags;
-    const char      *indent;
+    int              flags;            //!< Writer flags.
+    const char      *indent;           //!< Indentation string.
     size_t           nesting_written;
     ajson_write_func write_func;
     ajson_write_func next_write_func;

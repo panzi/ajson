@@ -22,7 +22,8 @@ option(AJSON_USE_GNUC_ADDRESS_FROM_LABEL
 option(BUILD_SHARED_LIBS "Build as shared library" ON)
 option(BUILD_EXAMPLES "Build examples" OFF)
 option(BUILD_PERF "Build performance tests" ON)
-option(BUILD_TESTS "Build tests (TODO)" OFF)
+option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_DOCS "Build documentation" OFF)
 
 set(AJSON_MAJOR_VERSION 1)
 set(AJSON_MINOR_VERSION 0)
@@ -106,6 +107,10 @@ endif()
 
 if(BUILD_TESTS)
 	add_subdirectory(test)
+endif()
+
+if(BUILD_DOCS)
+	add_subdirectory(doc)
 endif()
 
 # uninstall target

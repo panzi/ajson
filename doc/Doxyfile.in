@@ -1,0 +1,21 @@
+PROJECT_NAME          = ajson
+PROJECT_BRIEF         = "Asynchronous JSON library written in C."
+INPUT                 = @PROJECT_SOURCE_DIR@/src @PROJECT_SOURCE_DIR@/doc @PROJECT_BINARY_DIR@/src
+STRIP_FROM_PATH       = @PROJECT_SOURCE_DIR@/src
+OUTPUT_DIRECTORY      = @CMAKE_CURRENT_BINARY_DIR@
+EXCLUDE_PATTERNS      = *.c *.in *.txt snprintf.h export.h
+OPTIMIZE_OUTPUT_FOR_C = YES
+FULL_PATH_NAMES       = NO
+GENERATE_LATEX        = NO
+GENERATE_HTML         = YES
+GENERATE_MAN          = NO
+SEARCHENGINE          = YES
+HIDE_UNDOC_MEMBERS    = YES
+HIDE_UNDOC_CLASSES    = YES
+ENABLE_PREPROCESSING  = YES
+MACRO_EXPANSION       = YES
+EXPAND_ONLY_PREDEF    = YES
+TYPEDEF_HIDES_STRUCT  = YES
+PREDEFINED            = AJSON_EXPORT= \
+                        AJSON_LOCAL= \
+                        __attribute__(X)=
