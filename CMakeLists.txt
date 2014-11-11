@@ -60,35 +60,10 @@ else()
 	set(M_LIBRARY "")
 endif()
 
-# from libpng
-# Set a variable with CMake code which:
-# Creates a symlink from src to dest (if possible) or alternatively
-# copies if different.
-macro(ajson_generate_symlink_code CODE SRC DEST)
-	if(WIN32 AND NOT CYGWIN)
-		set(_ajson_gsc_message "Copying ${SRC} to ${DEST} if needed")
-		set(_ajson_gsc_operation "copy_if_different")
-	else()
-		set(_ajson_gsc_message "Symlinking ${SRC} to ${DEST}")
-		set(_ajson_gsc_operation "create_symlink")
-	endif()
-
-	set(${CODE} "
-		message(STATUS \"${_ajson_gsc_message}\")
-		execute_process(COMMAND \${CMAKE_COMMAND} -E ${_ajson_gsc_operation}
-			\"${SRC}\" \"${DEST}\")
-		")
-endmacro()
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ajson.pc.in
 	${CMAKE_CURRENT_BINARY_DIR}/${AJSON_NAME}.pc @ONLY)
 
-ajson_generate_symlink_code(AJSON_PC_INSTALL_CODE
-  ${CMAKE_CURRENT_BINARY_DIR}/${AJSON_NAME}.pc
-  ${CMAKE_CURRENT_BINARY_DIR}/ajson.pc)
-install(CODE ${AJSON_PC_INSTALL_CODE})
 install(FILES
-	${CMAKE_CURRENT_BINARY_DIR}/ajson.pc
 	${CMAKE_CURRENT_BINARY_DIR}/${AJSON_NAME}.pc
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
