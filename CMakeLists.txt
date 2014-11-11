@@ -60,12 +60,13 @@ else()
 	set(M_LIBRARY "")
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ajson.pc.in
-	${CMAKE_CURRENT_BINARY_DIR}/${AJSON_NAME}.pc @ONLY)
+configure_file(
+	"${CMAKE_CURRENT_SOURCE_DIR}/ajson.pc.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/${AJSON_NAME}.pc" @ONLY)
 
 install(FILES
-	${CMAKE_CURRENT_BINARY_DIR}/${AJSON_NAME}.pc
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+	"${CMAKE_CURRENT_BINARY_DIR}/${AJSON_NAME}.pc"
+	DESTINATION "${CMAKE_INSTALL_PREFIX}/share/pkgconfig")
 
 # for config.h
 include_directories("${PROJECT_BINARY_DIR}/src")
