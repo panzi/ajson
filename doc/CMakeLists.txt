@@ -7,4 +7,4 @@ configure_file(Doxyfile.in "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" @ONLY)
 
 add_custom_target(docs ALL
 	COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-	SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_SOURCE_DIR}/ajson.dox)
+	SOURCES Doxyfile.in ajson.dox parser.dox writer.dox callback_parser.dox)

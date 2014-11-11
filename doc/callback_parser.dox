@@ -1,0 +1,118 @@
+/** @file ajson.h */
+
+/** @defgroup callback_parser Callback Parser
+@ingroup parser
+*/
+
+/** @struct ajson_cb_parser_s
+@ingroup callback_parser
+@brief Callback parser structure.
+
+#ctx will be passed to all callback functions. Callback function pointers may be @c NULL .
+*/
+
+/** @typedef ajson_null_func
+@ingroup callback_parser
+@brief Callback type for @c null values.
+*/
+
+/** @typedef ajson_boolean_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_number_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_number_as_string_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_components_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_integer_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_string_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_begin_array_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_end_array_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_begin_object_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_end_object_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_end_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @typedef ajson_error_func
+@ingroup callback_parser
+@brief TODO
+*/
+
+/** @fn int ajson_cb_parse_fd(ajson_cb_parser *parser, int fd)
+@ingroup callback_parser
+@brief Parse JSON document from file descriptor.
+
+See ::ajson_feed, ::ajson_cb_dispatch and @c read() for possible error codes.
+
+@param parser Pointer to parser object.
+@param fd File descriptor.
+@return 0 on success, -1 otherwise.
+*/
+
+/** @fn int ajson_cb_parse_file(ajson_cb_parser *parser, FILE* stream)
+@ingroup callback_parser
+@brief Parse JSON document from @c FILE pointer.
+
+See ::ajson_feed, ::ajson_cb_dispatch and @c fread() for possible error codes.
+
+@param parser Pointer to parser object.
+@param stream @c FILE pointer.
+@return 0 on success, -1 otherwise.
+*/
+
+/** @fn int ajson_cb_parse_buf(ajson_cb_parser *parser, const void* buffer, size_t size)
+@ingroup callback_parser
+@brief Parse JSON document from buffer.
+
+See ::ajson_feed and ::ajson_cb_dispatch for possible error codes.
+
+@param parser Pointer to parser object.
+@param buffer The JSON document as byte buffer.
+@param size The size of the buffer.
+@return 0 on success, -1 otherwise.
+*/
+
+/** @fn int ajson_cb_dispatch(ajson_cb_parser *parser)
+@ingroup callback_parser
+@brief Parse a token and dispatch callback.
+@param parser Pointer to parser object.
+@return Returns -1 if ::AJSON_TOK_ERROR was returned by ::ajson_next_token, 0 otherwise.
+*/

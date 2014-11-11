@@ -1,0 +1,490 @@
+/** @file ajson.h */
+
+/** @defgroup parser Parser */
+
+/** @defgroup parser_getters Parser Getters
+@ingroup parser
+*/
+
+/** @def AJSON_FLAG_INTEGER
+@ingroup parser
+@brief Parse numbers without decimals or exponent as integers.
+@see ajson_init
+
+-0 is not parsed as integer because -0 and 0 are two distinct floating point values.
+The parsed integer will be stored in @c ajson_parser::value.integer .
+*/
+
+/** @def AJSON_FLAG_NUMBER_COMPONENTS
+@ingroup parser
+@brief Return number components instead of combining them to floating point values.
+@see ajson_init
+
+The parsed components will be stored in @c ajson_parser::value.components .
+*/
+
+/** @def AJSON_FLAG_NUMBER_AS_STRING
+@ingroup parser
+@brief Parse numbers as strings.
+@see ajson_init
+
+The parsed integer will be stored in @c ajson_parser::value.string.value . The string
+will be terminated with a null byte but in addition @c ajson_parser::value.string.length
+will be set to the length of the string excluding the null byte.
+*/
+
+/** @def AJSON_FLAGS_NONE
+@ingroup parser
+@brief No flags set.
+@see ajson_init
+*/
+
+/** @struct ajson_parser_s
+@ingroup parser
+@brief Parser structure.
+*/
+
+/** @var ajson_encoding
+@ingroup parser
+@see ajson_init
+@see ajson_write_string
+*/
+
+/** @var ajson_token
+@ingroup parser
+@see ajson_next_token
+*/
+
+/** @var AJSON_TOK_NEED_DATA
+@ingroup parser
+@brief Nothing could be parsed, more data is needed.
+@see ajson_feed
+*/
+
+/** @var AJSON_TOK_NULL
+@ingroup parser
+@brief @c null was parsed.
+*/
+
+/** @var AJSON_TOK_BOOLEAN
+@ingroup parser
+@brief A boolean value was parsed.
+
+The value will be stored in	@c ajson_parser::value.boolean .
+*/
+
+/** @var AJSON_TOK_NUMBER
+@ingroup parser
+@brief A number was parsed.
+
+The value will be stored in @c ajson_parser::value.number .
+*/
+
+/** @var AJSON_TOK_INTEGER
+@ingroup parser
+@brief A integer was parsed.
+
+The value will be stored in @c ajson_parser::value.integer .
+
+This token is only emitted if the ::AJSON_FLAG_INTEGER flag was set.
+*/
+
+/** @var AJSON_TOK_STRING
+@ingroup parser
+@brief A string or object key was parsed.
+
+The string will be stored in @c ajson_parser::value.string.value encoded as UTF-8.
+A terminating null byte will be appended to the string. Note that the string could
+contain null bytes at any location because the JSON could contain @c \\u0000 . To
+know wheter a null byte is the terminator at the end the real string length (excluding
+the terminating null byte) is store in @c ajson_parser::value.string.length .
+
+This token will be emitted when a string literal or the key of an object was parsed.
+*/
+
+/** @var AJSON_TOK_BEGIN_ARRAY
+@ingroup parser
+@brief @c "[" was parsed.
+*/
+
+/** @var AJSON_TOK_END_ARRAY
+@ingroup parser
+@brief @c "]" was parsed.
+*/
+
+/** @var AJSON_TOK_BEGIN_OBJECT
+@ingroup parser
+@brief @c "{" was parsed.
+*/
+
+/** @var AJSON_TOK_END_OBJECT
+@ingroup parser
+@brief @c "}" was parsed.
+*/
+
+/** @var AJSON_TOK_END
+@ingroup parser
+@brief Signals successful parsing until the end of the JSON document.
+*/
+
+/** @var AJSON_TOK_ERROR
+@ingroup parser
+@brief Signals an error.
+
+Error information will be stored in @c ajson_parser::value.error .
+*/
+
+/** @typedef ajson_error
+@ingroup parser
+@brief Error codes that can be emitted by the parser.
+@see ajson_next_token
+*/
+
+/** @var AJSON_ERROR_NONE
+@ingroup parser
+@brief No error.
+*/
+
+/** @var AJSON_ERROR_MEMORY
+@ingroup parser
+@brief Out of memory.
+*/
+
+/** @var AJSON_ERROR_EMPTY_SATCK
+@ingroup parser
+@brief Trying to pop from empty parser stack. (Internal error, please report a bug if it happens.)
+*/
+
+/** @var AJSON_ERROR_JUMP
+@ingroup parser
+@brief Illegal jump in parser logic. (Internal error, please report a bug if it happens.)
+*/
+
+/** @var AJSON_ERROR_PARSER_STATE
+@ingroup parser
+@brief Parser in error state.
+
+The parser previously emitted an error and is now in the error state. Before the
+parser can be used again ::ajson_reset needs to be called.
+*/
+
+/** @var AJSON_ERROR_PARSER_EXPECTED_DIGIT
+@ingroup parser
+@brief Expected a decimal digit but got something else.
+*/
+
+/** @var AJSON_ERROR_PARSER_EXPECTED_HEX
+@ingroup parser
+@brief Expected a hexadecimal digit but got something else.
+*/
+
+/** @var AJSON_ERROR_PARSER_EXPECTED_COMMA_OR_ARRAY_END
+@ingroup parser
+@brief Expected @c "," or @c "]" but got something else.
+*/
+
+/** @var AJSON_ERROR_PARSER_EXPECTED_COMMA_OR_OBJECT_END
+@ingroup parser
+@brief Expected @c "," or @c "}" but got something else.
+*/
+
+/** @var AJSON_ERROR_PARSER_EXPECTED_STRING
+@ingroup parser
+@brief Expected a string literal but got something else.
+*/
+
+/** @var AJSON_ERROR_PARSER_EXPECTED_COLON
+@ingroup parser
+@brief Expected @c ":" but got something else.
+*/
+
+/** @var AJSON_ERROR_PARSER_ILLEGAL_ESCAPE
+@ingroup parser
+@brief Illegal escape sequence.
+*/
+
+/** @var AJSON_ERROR_PARSER_ILLEGAL_UNICODE
+@ingroup parser
+@brief Illegal unicode byte sequence or escape.
+*/
+
+/** @var AJSON_ERROR_PARSER_RANGE
+@ingroup parser
+@brief Exponent of parsed decimal value does not fit into 64 bits.
+*/
+
+/** @var AJSON_ERROR_PARSER_UNEXPECTED_CHAR
+@ingroup parser
+@brief Unexpected character.
+*/
+
+/** @var AJSON_ERROR_PARSER_UNEXPECTED_EOF
+@ingroup parser
+@brief Unexpected end of file.
+*/
+
+/** @fn int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding)
+@ingroup parser
+@brief Initialize a parser object.
+
+### Errors
+
+ - @c EINVAL Unknown flags or ::AJSON_FLAG_NUMBER_AS_STRING in combination with
+			 ::AJSON_FLAG_INTEGER or ::AJSON_FLAG_NUMBER_COMPONENTS passed.
+ - @c ENOMEM Not enough memory to allocate parser stack.
+
+@param parser Pointer to parser object.
+@param flags Parser flags.
+@param encoding Input encoding.
+@return Returns 0 on success, -1 otherwise and sets @c errno .
+@see AJSON_FLAG_NUMBER_AS_STRING
+@see AJSON_FLAG_INTEGER
+@see AJSON_FLAG_NUMBER_COMPONENTS
+@see AJSON_FLAGS_NONE
+*/
+
+/** @fn void ajson_reset(ajson_parser *parser)
+@ingroup parser
+@brief Reset the parser.
+
+This must be called to be able to reuse a parser object even if parsing was finished and
+::AJSON_TOK_END or ::AJSON_TOK_ERROR was returned by ::ajson_next_token .
+
+@param parser Pointer to parser object.
+*/
+
+/** @fn void ajson_destroy(ajson_parser *parser)
+@ingroup parser
+@brief Free allocated data structures.
+@param parser Pointer to parser object.
+*/
+
+/** @fn int ajson_feed(ajson_parser *parser, const void *buffer, size_t size)
+@ingroup parser
+@brief Feed data to parser.
+
+Feed a buffer of size 0 to signal the end of the file.
+
+### Errors
+
+ - @c ENOBUFS Last data chunk wasn't parsed to it's end. This won't happen if you call ::ajson_next_token
+			  until you get ::AJSON_TOK_NEED_DATA or ::AJSON_TOK_END.
+
+@param parser Pointer to parser object.
+@param buffer Pointer to data chunk.
+@param size Size of data chunk.
+@return 0 on success, -1 otherwise.
+*/
+
+/** @fn enum ajson_token ajson_next_token(ajson_parser *parser)
+@ingroup parser
+@brief Parse next token.
+@param parser Pointer to parser object.
+@return Parsed token.
+*/
+
+/** @fn ajson_parser *ajson_alloc(int flags, enum ajson_encoding encoding)
+@ingroup parser
+@brief Allicate parser object on heap and initialize it.
+@see ajson_init
+
+The main use for this function is for bindings (e.g. the Python bindings) where managing the memory for
+the parser struct would be cumbersome.
+
+### Errors
+
+ - @c EINVAL Unknown flags or ::AJSON_FLAG_NUMBER_AS_STRING in combination with
+			 ::AJSON_FLAG_INTEGER or ::AJSON_FLAG_NUMBER_COMPONENTS passed.
+ - @c ENOMEM Not enough memory to allocate parser object or parser stack.
+
+@return Pointer to new parser object or @c NULL if an error occured.
+*/
+
+/** @fn void ajson_free(ajson_parser *parser)
+@ingroup parser
+@brief Destroy and free parser object.
+@see ajson_destroy
+@param parser Pointer to parser object.
+*/
+
+/** @fn int ajson_get_flags(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the parser flags.
+@param parser Pointer to parser object.
+@return Returns the parser flags.
+*/
+
+/** @fn bool ajson_get_boolean(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the parsed boolean value.
+
+This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_BOOLEAN.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the parsed boolean value.
+*/
+
+/** @fn double ajson_get_number(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the parsed number.
+
+This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_NUMBER and
+neither ::AJSON_FLAG_NUMBER_AS_STRING or ::AJSON_FLAG_NUMBER_COMPONENTS where used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the parsed number.
+*/
+
+/** @fn int64_t ajson_get_integer(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the parsed integer.
+
+This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_INTEGER.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the parsed integer.
+*/
+
+/** @fn const char* ajson_get_string(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the parsed string.
+
+This will only return a valid pointer if the last call to ::ajson_next_token returned
+::AJSON_TOK_STRING or ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_AS_STRING was used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the parsed string.
+*/
+
+/** @fn size_t ajson_get_string_length(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the size of the parsed string.
+
+This will only return a valid pointer if the last call to ::ajson_next_token returned
+::AJSON_TOK_STRING or ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_AS_STRING was used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the size of the parsed string.
+*/
+
+/** @fn bool ajson_get_components_positive(const ajson_parser *parser)
+@ingroup parser_getters
+@brief TODO
+
+This will only return a valid value if the last call to ::ajson_next_token returned
+::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+*/
+
+/** @fn bool ajson_get_components_exponent_positive(const ajson_parser *parser)
+@ingroup parser_getters
+@brief TODO
+
+This will only return a valid value if the last call to ::ajson_next_token returned
+::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+*/
+
+/** @fn uint64_t ajson_get_components_integer(const ajson_parser *parser)
+@ingroup parser_getters
+@brief TODO
+
+This will only return a valid value if the last call to ::ajson_next_token returned
+::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+*/
+
+/** @fn uint64_t ajson_get_components_decimal(const ajson_parser *parser)
+@ingroup parser_getters
+@brief TODO
+
+This will only return a valid value if the last call to ::ajson_next_token returned
+::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+*/
+
+/** @fn uint64_t ajson_get_components_decimal_places(const ajson_parser *parser)
+@ingroup parser_getters
+@brief TODO
+
+This will only return a valid value if the last call to ::ajson_next_token returned
+::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+*/
+
+/** @fn uint64_t ajson_get_components_exponent(const ajson_parser *parser)
+@ingroup parser_getters
+@brief TODO
+
+This will only return a valid value if the last call to ::ajson_next_token returned
+::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+*/
+
+/** @fn enum ajson_error ajson_get_error(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the current error code.
+
+This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the current error code.
+*/
+
+/** @fn const char* ajson_get_error_filename(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the C source file where the error occured (currently always parser.c).
+
+This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the C source file where the error occured.
+*/
+
+/** @fn const char* ajson_get_error_function(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the C function where the error occured.
+
+This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the C function where the error occured.
+*/
+
+/** @fn size_t ajson_get_error_lineno(const ajson_parser *parser)
+@ingroup parser_getters
+@brief Get the line in the C source file where the error occured.
+
+This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
+This function is primarly available to make writing bindings for languages like Python easier.
+
+@param parser Pointer to parser object.
+@return Returns the line in the C source file where the error occured.
+*/
+
+/** @fn const char* ajson_error_str(enum ajson_error error)
+@ingroup parser
+@brief Get the error message to a given error code.
+@param error The error code.
+@return Returns the error message.
+*/

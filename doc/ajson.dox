@@ -1,351 +1,60 @@
-/** @file config.h
-*/
+/** @file config.h */
+
+/** @defgroup general General */
 
 /** @def AJSON_VERSION_MAJOR
+@ingroup general
 @brief The major version of the ajson library headers.
 @see ajson_version_major
 */
 
 /** @def AJSON_VERSION_MINOR
+@ingroup general
 @brief The minor version of the ajson library headers.
 @see ajson_version_minor
 */
 
 /** @def AJSON_VERSION_PATCH
+@ingroup general
 @brief The patch version of the ajson library headers.
 @see ajson_version_patch
 */
 
 /** @def AJSON_VERSION_STRING
+@ingroup general
 @brief The version string of the ajson library headers.
 @see ajson_version
 */
 
 /** @def AJSON_USE_GNUC_ADDRESS_FROM_LABEL
+@ingroup general
 @brief Only defined if the GNUC address from label extension is used in the ajson library.
 */
 
-/** @file ajson.h
-*/
-
-/** @defgroup parser Parser */
-
-/** @defgroup parser_getters Parser Getters
-@ingroup parser
-*/
-
-/** @defgroup callback_parser Callback Parser
-@ingroup parser
-*/
-
-/** @defgroup writer Writer
-*/
-
-/** @defgroup writer_write Write Functions
-@ingroup writer
-*/
-
-/** @defgroup writer_getters Writer Getters
-@ingroup writer
-*/
+/** @file ajson.h */
 
 /** @def AJSON_VERSION_CHECK()
+@ingroup general
 @brief Check if the version of the used ajson library is compatible to the version of the used headers.
 */
 
 /** @def AJSON_STACK_SIZE
+@ingroup general
 @brief Initial stack size for parsing recursive data structures.
 */
 
-/** @def AJSON_FLAG_INTEGER
-@ingroup parser
-@brief Parse numbers without decimals or exponent as integers.
-@see ajson_init
-
--0 is not parsed as integer because -0 and 0 are two distinct floating point values.
-The parsed integer will be stored in @c ajson_parser::value.integer .
-*/
-
-/** @def AJSON_FLAG_NUMBER_COMPONENTS
-@ingroup parser
-@brief Return number components instead of combining them to floating point values.
-@see ajson_init
-
-The parsed components will be stored in @c ajson_parser::value.components .
-*/
-
-/** @def AJSON_FLAG_NUMBER_AS_STRING
-@ingroup parser
-@brief Parse numbers as strings.
-@see ajson_init
-
-The parsed integer will be stored in @c ajson_parser::value.string.value . The string
-will be terminated with a null byte but in addition @c ajson_parser::value.string.length
-will be set to the length of the string excluding the null byte.
-*/
-
-/** @def AJSON_FLAGS_NONE
-@ingroup parser
-@brief No flags set.
-@see ajson_init
-*/
-
-/** @def AJSON_WRITER_FLAG_ASCII
-@brief Write ASCII compatible output.
-@ingroup writer
-@see ajson_writer_init
-
-This will encode non-ACII characters in strings using @c \\u#### escape sequences.
-*/
-
-/** @def AJSON_WRITER_FLAGS_NONE
-@ingroup writer
-@brief No flags set.
-@see ajson_writer_init
-*/
-
-/** @struct ajson_parser_s
-@ingroup parser
-@brief Parser structure.
-*/
-
-/** @struct ajson_cb_parser_s
-@ingroup callback_parser
-@brief Callback parser structure.
-
-#ctx will be passed to all callback functions. Callback function pointers may be @c NULL .
-*/
-
-/** @struct ajson_writer_s
-@ingroup writer
-@brief Writer structure.
-*/
-
-/** @typedef ajson_null_func
-@ingroup callback_parser
-@brief Callback type for @c null values.
-*/
-
-/** @typedef ajson_boolean_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_number_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_number_as_string_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_components_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_integer_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_string_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_begin_array_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_end_array_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_begin_object_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_end_object_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_end_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_error_func
-@ingroup callback_parser
-@brief TODO
-*/
-
-/** @var ajson_encoding
-@ingroup parser
-@see ajson_init
-@see ajson_write_string
-*/
-
 /** @var AJSON_ENC_LATIN1
+@ingroup general
 @brief Latin-1/ISO-8859-1
 */
 
 /** @var AJSON_ENC_UTF8
+@ingroup general
 @brief UTF-8
 */
 
-/** @var ajson_token
-@ingroup parser
-@see ajson_next_token
-*/
-
-/** @var AJSON_TOK_NEED_DATA
-@brief Nothing could be parsed, more data is needed.
-@see ajson_feed
-*/
-
-/** @var AJSON_TOK_NULL
-@brief @c null was parsed.
-*/
-
-/** @var AJSON_TOK_BOOLEAN
-@brief A boolean value was parsed.
-
-The value will be stored in	@c ajson_parser::value.boolean .
-*/
-
-/** @var AJSON_TOK_NUMBER
-@brief A number was parsed.
-
-The value will be stored in @c ajson_parser::value.number .
-*/
-
-/** @var AJSON_TOK_INTEGER
-@brief A integer was parsed.
-
-The value will be stored in @c ajson_parser::value.integer .
-
-This token is only emitted if the ::AJSON_FLAG_INTEGER flag was set.
-*/
-
-/** @var AJSON_TOK_STRING
-@brief A string or object key was parsed.
-
-The string will be stored in @c ajson_parser::value.string.value encoded as UTF-8.
-A terminating null byte will be appended to the string. Note that the string could
-contain null bytes at any location because the JSON could contain @c \\u0000 . To
-know wheter a null byte is the terminator at the end the real string length (excluding
-the terminating null byte) is store in @c ajson_parser::value.string.length .
-
-This token will be emitted when a string literal or the key of an object was parsed.
-*/
-
-/** @var AJSON_TOK_BEGIN_ARRAY
-@brief @c "[" was parsed.
-*/
-
-/** @var AJSON_TOK_END_ARRAY
-@brief @c "]" was parsed.
-*/
-
-/** @var AJSON_TOK_BEGIN_OBJECT
-@brief @c "{" was parsed.
-*/
-
-/** @var AJSON_TOK_END_OBJECT
-@brief @c "}" was parsed.
-*/
-
-/** @var AJSON_TOK_END
-@brief Signals successful parsing until the end of the JSON document.
-*/
-
-/** @var AJSON_TOK_ERROR
-@brief Signals an error.
-
-Error information will be stored in @c ajson_parser::value.error .
-*/
-
-/** @typedef ajson_error
-@ingroup parser
-@brief Error codes that can be emitted by the parser.
-@see ajson_next_token
-*/
-
-/** @var AJSON_ERROR_NONE
-@brief No error.
-*/
-
-/** @var AJSON_ERROR_MEMORY
-@brief Out of memory.
-*/
-
-/** @var AJSON_ERROR_EMPTY_SATCK
-@brief Trying to pop from empty parser stack. (Internal error, please report a bug if it happens.)
-*/
-
-/** @var AJSON_ERROR_JUMP
-@brief Illegal jump in parser logic. (Internal error, please report a bug if it happens.)
-*/
-
-/** @var AJSON_ERROR_PARSER_STATE
-@brief Parser in error state.
-
-The parser previously emitted an error and is now in the error state. Before the
-parser can be used again ::ajson_reset needs to be called.
-*/
-
-/** @var AJSON_ERROR_PARSER_EXPECTED_DIGIT
-@brief Expected a decimal digit but got something else.
-*/
-
-/** @var AJSON_ERROR_PARSER_EXPECTED_HEX
-@brief Expected a hexadecimal digit but got something else.
-*/
-
-/** @var AJSON_ERROR_PARSER_EXPECTED_COMMA_OR_ARRAY_END
-@brief Expected @c "," or @c "]" but got something else.
-*/
-
-/** @var AJSON_ERROR_PARSER_EXPECTED_COMMA_OR_OBJECT_END
-@brief Expected @c "," or @c "}" but got something else.
-*/
-
-/** @var AJSON_ERROR_PARSER_EXPECTED_STRING
-@brief Expected a string literal but got something else.
-*/
-
-/** @var AJSON_ERROR_PARSER_EXPECTED_COLON
-@brief Expected @c ":" but got something else.
-*/
-
-/** @var AJSON_ERROR_PARSER_ILLEGAL_ESCAPE
-@brief Illegal escape sequence.
-*/
-
-/** @var AJSON_ERROR_PARSER_ILLEGAL_UNICODE
-@brief Illegal unicode byte sequence or escape.
-*/
-
-/** @var AJSON_ERROR_PARSER_RANGE
-@brief Exponent of parsed decimal value does not fit into 64 bits.
-*/
-
-/** @var AJSON_ERROR_PARSER_UNEXPECTED_CHAR
-@brief Unexpected character.
-*/
-
-/** @var AJSON_ERROR_PARSER_UNEXPECTED_EOF
-@brief Unexpected end of file.
-*/
-
 /** @fn const char *ajson_version()
+@ingroup general
 @brief Get ajson version string.
 
 Get the version string of the ajson library. This might be different to ::AJSON_VERSION_STRING
@@ -355,6 +64,7 @@ if the library version doesn't match the version of the used headers.
 */
 
 /** @fn unsigned int ajson_version_major()
+@ingroup general
 @brief Get ajson major version.
 
 Get the major version of the ajson library. This might be different to ::AJSON_VERSION_MAJOR
@@ -364,6 +74,7 @@ if the library version doesn't match the version of the used headers.
 */
 
 /** @fn unsigned int ajson_version_minor()
+@ingroup general
 @brief Get ajson minor version.
 
 Get the minor version of the ajson library. This might be different to ::AJSON_VERSION_MINOR
@@ -373,6 +84,7 @@ if the library version doesn't match the version of the used headers.
 */
 
 /** @fn unsigned int ajson_version_patch()
+@ingroup general
 @brief Get ajson patch version.
 
 Get the patch version of the ajson library. This might be different to ::AJSON_VERSION_PATCH
@@ -381,525 +93,8 @@ if the library version doesn't match the version of the used headers.
 @return The patch version.
 */
 
-/** @fn int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding)
-@ingroup parser
-@brief Initialize a parser object.
-
-### Errors
-
- - @c EINVAL Unknown flags or ::AJSON_FLAG_NUMBER_AS_STRING in combination with
-			 ::AJSON_FLAG_INTEGER or ::AJSON_FLAG_NUMBER_COMPONENTS passed.
- - @c ENOMEM Not enough memory to allocate parser stack.
-
-@param parser Pointer to parser object.
-@param flags Parser flags.
-@param encoding Input encoding.
-@return Returns 0 on success, -1 otherwise and sets @c errno .
-@see AJSON_FLAG_NUMBER_AS_STRING
-@see AJSON_FLAG_INTEGER
-@see AJSON_FLAG_NUMBER_COMPONENTS
-@see AJSON_FLAGS_NONE
-*/
-
-/** @fn void ajson_reset(ajson_parser *parser)
-@ingroup parser
-@brief Reset the parser.
-
-This must be called to be able to reuse a parser object even if parsing was finished and
-::AJSON_TOK_END or ::AJSON_TOK_ERROR was returned by ::ajson_next_token .
-
-@param parser Pointer to parser object.
-*/
-
-/** @fn void ajson_destroy(ajson_parser *parser)
-@ingroup parser
-@brief Free allocated data structures.
-@param parser Pointer to parser object.
-*/
-
-/** @fn int ajson_feed(ajson_parser *parser, const void *buffer, size_t size)
-@ingroup parser
-@brief Feed data to parser.
-
-Feed a buffer of size 0 to signal the end of the file.
-
-### Errors
-
- - @c ENOBUFS Last data chunk wasn't parsed to it's end. This won't happen if you call ::ajson_next_token
-			  until you get ::AJSON_TOK_NEED_DATA or ::AJSON_TOK_END.
-
-@param parser Pointer to parser object.
-@param buffer Pointer to data chunk.
-@param size Size of data chunk.
-@return 0 on success, -1 otherwise.
-*/
-
-/** @fn enum ajson_token ajson_next_token(ajson_parser *parser)
-@ingroup parser
-@brief Parse next token.
-@param parser Pointer to parser object.
-@return Parsed token.
-*/
-
-/** @fn ajson_parser *ajson_alloc(int flags, enum ajson_encoding encoding)
-@brief Allicate parser object on heap and initialize it.
-@see ajson_init
-
-The main use for this function is for bindings (e.g. the Python bindings) where managing the memory for
-the parser struct would be cumbersome.
-
-### Errors
-
- - @c EINVAL Unknown flags or ::AJSON_FLAG_NUMBER_AS_STRING in combination with
-			 ::AJSON_FLAG_INTEGER or ::AJSON_FLAG_NUMBER_COMPONENTS passed.
- - @c ENOMEM Not enough memory to allocate parser object or parser stack.
-
-@return Pointer to new parser object or @c NULL if an error occured.
-*/
-
-/** @fn void ajson_free(ajson_parser *parser)
-@ingroup parser
-@brief Destroy and free parser object.
-@see ajson_destroy
-@param parser Pointer to parser object.
-*/
-
-/** @fn int ajson_get_flags(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the parser flags.
-@param parser Pointer to parser object.
-@return Returns the parser flags.
-*/
-
-/** @fn bool ajson_get_boolean(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the parsed boolean value.
-
-This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_BOOLEAN.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the parsed boolean value.
-*/
-
-/** @fn double ajson_get_number(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the parsed number.
-
-This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_NUMBER and
-neither ::AJSON_FLAG_NUMBER_AS_STRING or ::AJSON_FLAG_NUMBER_COMPONENTS where used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the parsed number.
-*/
-
-/** @fn int64_t ajson_get_integer(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the parsed integer.
-
-This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_INTEGER.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the parsed integer.
-*/
-
-/** @fn const char* ajson_get_string(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the parsed string.
-
-This will only return a valid pointer if the last call to ::ajson_next_token returned
-::AJSON_TOK_STRING or ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_AS_STRING was used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the parsed string.
-*/
-
-/** @fn size_t ajson_get_string_length(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the size of the parsed string.
-
-This will only return a valid pointer if the last call to ::ajson_next_token returned
-::AJSON_TOK_STRING or ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_AS_STRING was used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the size of the parsed string.
-*/
-
-/** @fn bool ajson_get_components_positive(const ajson_parser *parser)
-@ingroup parser_getters
-@brief TODO
-
-This will only return a valid value if the last call to ::ajson_next_token returned
-::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-*/
-
-/** @fn bool ajson_get_components_exponent_positive(const ajson_parser *parser)
-@ingroup parser_getters
-@brief TODO
-
-This will only return a valid value if the last call to ::ajson_next_token returned
-::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-*/
-
-/** @fn uint64_t ajson_get_components_integer(const ajson_parser *parser)
-@ingroup parser_getters
-@brief TODO
-
-This will only return a valid value if the last call to ::ajson_next_token returned
-::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-*/
-
-/** @fn uint64_t ajson_get_components_decimal(const ajson_parser *parser)
-@ingroup parser_getters
-@brief TODO
-
-This will only return a valid value if the last call to ::ajson_next_token returned
-::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-*/
-
-/** @fn uint64_t ajson_get_components_decimal_places(const ajson_parser *parser)
-@ingroup parser_getters
-@brief TODO
-
-This will only return a valid value if the last call to ::ajson_next_token returned
-::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-*/
-
-/** @fn uint64_t ajson_get_components_exponent(const ajson_parser *parser)
-@ingroup parser_getters
-@brief TODO
-
-This will only return a valid value if the last call to ::ajson_next_token returned
-::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-*/
-
-/** @fn enum ajson_error ajson_get_error(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the current error code.
-
-This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the current error code.
-*/
-
-/** @fn const char* ajson_get_error_filename(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the C source file where the error occured (currently always parser.c).
-
-This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the C source file where the error occured.
-*/
-
-/** @fn const char* ajson_get_error_function(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the C function where the error occured.
-
-This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the C function where the error occured.
-*/
-
-/** @fn size_t ajson_get_error_lineno(const ajson_parser *parser)
-@ingroup parser_getters
-@brief Get the line in the C source file where the error occured.
-
-This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
-This function is primarly available to make writing bindings for languages like Python easier.
-
-@param parser Pointer to parser object.
-@return Returns the line in the C source file where the error occured.
-*/
-
-/** @fn const char* ajson_error_str(enum ajson_error error)
-@ingroup parser
-@brief Get the error message to a given error code.
-@param error The error code.
-@return Returns the error message.
-*/
-
-/** @fn int ajson_cb_parse_fd(ajson_cb_parser *parser, int fd)
-@ingroup callback_parser
-@brief Parse JSON document from file descriptor.
-
-See ::ajson_feed, ::ajson_cb_dispatch and @c read() for possible error codes.
-
-@param parser Pointer to parser object.
-@param fd File descriptor.
-@return 0 on success, -1 otherwise.
-*/
-
-/** @fn int ajson_cb_parse_file(ajson_cb_parser *parser, FILE* stream)
-@ingroup callback_parser
-@brief Parse JSON document from @c FILE pointer.
-
-See ::ajson_feed, ::ajson_cb_dispatch and @c fread() for possible error codes.
-
-@param parser Pointer to parser object.
-@param stream @c FILE pointer.
-@return 0 on success, -1 otherwise.
-*/
-
-/** @fn int ajson_cb_parse_buf(ajson_cb_parser *parser, const void* buffer, size_t size)
-@ingroup callback_parser
-@brief Parse JSON document from buffer.
-
-See ::ajson_feed and ::ajson_cb_dispatch for possible error codes.
-
-@param parser Pointer to parser object.
-@param buffer The JSON document as byte buffer.
-@param size The size of the buffer.
-@return 0 on success, -1 otherwise.
-*/
-
-/** @fn int ajson_cb_dispatch(ajson_cb_parser *parser)
-@ingroup callback_parser
-@brief Parse a token and dispatch callback.
-@param parser Pointer to parser object.
-@return Returns -1 if ::AJSON_TOK_ERROR was returned by ::ajson_next_token, 0 otherwise.
-*/
-
-/** @fn int ajson_writer_init(ajson_writer *writer, int flags, const char *indent)
-@ingroup writer
-@brief TODO
-
-Passing @c NULL for indent means no formatted output shall be written and thus no
-line breaks will be written and no spaces will be inserted after @c ":" .
-
-@param writer Pointer to writer object.
-@param flags Writer flags.
-@param indent String used for indendation or @c NULL .
-@return Returns 0 on success, -1 otherwise.
-*/
-
-/** @fn void ajson_writer_destroy(ajson_writer *writer)
-@ingroup writer
-@brief TODO
-@param writer Pointer to writer object.
-*/
-
-/** @fn ajson_writer *ajson_writer_alloc(int flags, const char *indent)
-@ingroup writer
-@brief TODO
-@param flags Writer flags.
-@param indent String used for indendation or @c NULL .
-@return Pointer to the new writer object or @c NULL if an error occured.
-*/
-
-/** @fn void ajson_writer_free(ajson_writer *writer)
-@ingroup writer
-@brief TODO
-@param writer Pointer to writer object.
-*/
-
-/** @fn ssize_t ajson_write_null(ajson_writer *writer, void *buffer, size_t size)
-@ingroup writer_write
-@brief Write @c null .
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool value)
-@ingroup writer_write
-@brief Write a boolean value.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@param value The value to write.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_number(ajson_writer *writer, void *buffer, size_t size, double value)
-@ingroup writer_write
-@brief Write a number.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@param value The value to write.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int64_t value)
-@ingroup writer_write
-@brief Write an integer.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@param value The value to write.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, const char* value, size_t length, enum ajson_encoding encoding)
-@ingroup writer_write
-@brief Write a string.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@param value The string to write.
-@param length The length of the passed string.
-@param encoding The enclding of the passed string.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_string_latin1(ajson_writer *writer, void *buffer, size_t size, const char* value)
-@ingroup writer_write
-@brief Write a string.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@param value A null terminated Latin-1 string.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_string_utf8(ajson_writer *writer, void *buffer, size_t size, const char* value)
-@ingroup writer_write
-@brief Write a string.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@param value A null terminated UTF-8 string.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size)
-@ingroup writer_write
-@brief Begin writing an array.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_end_array(ajson_writer *writer, void *buffer, size_t size)
-@ingroup writer_write
-@brief End writing an array.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size)
-@ingroup writer_write
-@brief Begin writing an object.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_end_object(ajson_writer *writer, void *buffer, size_t size)
-@ingroup writer_write
-@brief End writing an object.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called (possibly repeatedly) in order to write the rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, size_t size)
-@ingroup writer_write
-@brief Write data to buffer that didn't fit into the last buffer.
-
-If the buffer was not big enough the returned size will be the buffer size. In this case
-::ajson_write_continue has to be called again (possibly repeatedly) in order to write the
-rest.
-
-@param writer Pointer to writer object.
-@param buffer Buffer to which shall be written.
-@param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
-*/
-
-/** @fn int ajson_writer_get_flags(ajson_writer *writer)
-@ingroup writer_getters
-@brief Get the writer flags.
-@param writer Pointer to writer object.
-@return Returns the writer flags.
-*/
-
-/** @fn const char *ajson_writer_get_indent(ajson_writer *writer)
-@ingroup writer_getters
-@brief Get the indentation string.
-@param writer Pointer to writer object.
-@return Returns the indentation string.
-*/
-
 /** @fn int ajson_decode_utf8(const unsigned char buffer[], size_t size, uint32_t *codepoint)
+@ingroup general
 @brief Decode a unicode code point from UTF-8 data.
 
 ### Errors
