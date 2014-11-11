@@ -75,12 +75,12 @@ struct ajson_parser_s {
     const char         *input;           //!< Current input chunk.
     size_t              input_size;      //!< Size of current input chunk.
     size_t              input_current;   //!< Index of first not parsed byte in input chunk.
-    uintptr_t          *stack;           //!< @internal
-    size_t              stack_size;      //!< @internal
-    size_t              stack_current;   //!< @internal
-    char               *buffer;          //!< @internal
-    size_t              buffer_size;     //!< @internal
-    size_t              buffer_used;     //!< @internal
+    uintptr_t          *stack;           //!< @private
+    size_t              stack_size;      //!< @private
+    size_t              stack_current;   //!< @private
+    char               *buffer;          //!< @private
+    size_t              buffer_size;     //!< @private
+    size_t              buffer_used;     //!< @private
     union {
         bool          boolean;           //!< Parsed boolean value.
         double        number;            //!< Parsed number.
@@ -95,10 +95,10 @@ struct ajson_parser_s {
             uint64_t  exponent;          //!< Exponent ot parsed number.
         } components;                    //!< Parsed number components.
         struct {
-            uint16_t  unit1;             //!< @internal
-            uint16_t  unit2;             //!< @internal
-        } utf16;                         //!< @internal
-        unsigned char utf8[4];           //!< @internal
+            uint16_t  unit1;             //!< @private
+            uint16_t  unit2;             //!< @private
+        } utf16;                         //!< @private
+        unsigned char utf8[4];           //!< @private
         struct {
             const char *value;           //!< Parsed string data.
             size_t      length;          //!< Parsed string length.
@@ -194,51 +194,52 @@ struct ajson_writer_s;
 typedef ssize_t (*ajson_write_func)(struct ajson_writer_s *writer, unsigned char *buffer, size_t size, size_t index);
 
 struct ajson_writer_s {
-    int              flags;            //!< Writer flags.
-    const char      *indent;           //!< Indentation string.
-    size_t           nesting_written;
-    ajson_write_func write_func;
-    ajson_write_func next_write_func;
-    uintptr_t        state;
-    char            *stack;
-    size_t           stack_size;
-    size_t           stack_current;
+    int              flags;               //!< Writer flags.
+    const char      *indent;              //!< Indentation string.
+    size_t           nesting_written;     //!< @private
+    ajson_write_func write_func;          //!< @private
+    ajson_write_func next_write_func;     //!< @private
+    uintptr_t        state;               //!< @private
+    char            *stack;               //!< @private
+    size_t           stack_size;          //!< @private
+    size_t           stack_current;       //!< @private
     union {
-        const char *string;
-        char        character;
-    } buffer;
+        const char *string;               //!< @private
+        char        character;            //!< @private
+    } buffer;                             //!< @private
     union {
-        bool boolean;
+        bool boolean;                     //!< @private
         struct {
-            double value;
-            size_t written;
-            char   buffer[32];
-        } number;
+            double value;                 //!< @private
+            size_t written;               //!< @private
+            char   buffer[32];            //!< @private
+        } number;                         //!< @private
         struct {
             union {
-                int64_t  sval;
-                uint64_t uval;
-            } value;
-            uint64_t div;
-        } integer;
+                int64_t  sval;            //!< @private
+                uint64_t uval;            //!< @private
+            } value;                      //!< @private
+            uint64_t div;                 //!< @private
+        } integer;                        //!< @private
         struct {
-            const char         *value;
-            const char         *end;
-            enum ajson_encoding encoding;
+            const char         *value;    //!< @private
+            const char         *end;      //!< @private
+            enum ajson_encoding encoding; //!< @private
             union {
-                size_t       count;
+                size_t       count;       //!< @private
                 struct {
-                    uint16_t unit1;
-                    uint16_t unit2;
-                } utf16;
-            } buffer;
-        } string;
-    } value;
+                    uint16_t unit1;       //!< @private
+                    uint16_t unit2;       //!< @private
+                } utf16;                  //!< @private
+            } buffer;                     //!< @private
+        } string;                         //!< @private
+    } value;                              //!< @private
 };
 
 typedef struct ajson_writer_s ajson_writer;
 
 AJSON_EXPORT int  ajson_writer_init   (ajson_writer *writer, int flags, const char *indent);
+AJSON_EXPORT void ajson_writer_reset  (ajson_writer *writer);
 AJSON_EXPORT void ajson_writer_destroy(ajson_writer *writer);
 
 AJSON_EXPORT ajson_writer *ajson_writer_alloc(int flags, const char *indent);

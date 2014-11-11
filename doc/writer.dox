@@ -8,14 +8,21 @@
 
 /** @defgroup writer_getters Writer Getters
 @ingroup writer
+
+The main use for this functions is for bindings (e.g. the Python bindings) where accessing
+the fields of the struct would be cumbersome. Using the getters and ::ajson_writer_alloc/::ajson_writer_free
+also means that your program will be compatible to any furhter changes of ::ajson_writer_s.
+But such changes will be unlikely and would require a bump of the major version.
+
 */
 
 /** @def AJSON_WRITER_FLAG_ASCII
 @brief Write ASCII compatible output.
 @ingroup writer
-@see ajson_writer_init
 
 This will encode non-ACII characters in strings using @c \\u#### escape sequences.
+
+@see ajson_writer_init
 */
 
 /** @def AJSON_WRITER_FLAGS_NONE
@@ -31,7 +38,8 @@ This will encode non-ACII characters in strings using @c \\u#### escape sequence
 
 /** @fn int ajson_writer_init(ajson_writer *writer, int flags, const char *indent)
 @ingroup writer
-@brief TODO
+@memberof ajson_writer_s
+@brief Initialize a writer object.
 
 Passing @c NULL for indent means no formatted output shall be written and thus no
 line breaks will be written and no spaces will be inserted after @c ":" .
@@ -39,18 +47,31 @@ line breaks will be written and no spaces will be inserted after @c ":" .
 @param writer Pointer to writer object.
 @param flags Writer flags.
 @param indent String used for indendation or @c NULL .
-@return Returns 0 on success, -1 otherwise.
+@return 0 on success, -1 otherwise.
+*/
+
+/** @fn void ajson_writer_reset(ajson_writer *writer)
+@ingroup writer
+@memberof ajson_writer_s
+@brief Reset the writer.
+
+This must be called to be able to reuse a writer object even if a whole JSON document
+was written.
+
+@param writer Pointer to writer object.
 */
 
 /** @fn void ajson_writer_destroy(ajson_writer *writer)
 @ingroup writer
-@brief TODO
+@memberof ajson_writer_s
+@brief Free structures of a writer object.
 @param writer Pointer to writer object.
 */
 
 /** @fn ajson_writer *ajson_writer_alloc(int flags, const char *indent)
 @ingroup writer
-@brief TODO
+@relates ajson_writer_s
+@brief Allocate and initialize a writer object.
 @param flags Writer flags.
 @param indent String used for indendation or @c NULL .
 @return Pointer to the new writer object or @c NULL if an error occured.
@@ -58,12 +79,17 @@ line breaks will be written and no spaces will be inserted after @c ":" .
 
 /** @fn void ajson_writer_free(ajson_writer *writer)
 @ingroup writer
-@brief TODO
+@memberof ajson_writer_s
+@brief Free a writer object.
+
+Free a writer object that was previously allocated using ::ajson_writer_alloc.
+
 @param writer Pointer to writer object.
 */
 
 /** @fn ssize_t ajson_write_null(ajson_writer *writer, void *buffer, size_t size)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Write @c null .
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -72,11 +98,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param writer Pointer to writer object.
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_boolean(ajson_writer *writer, void *buffer, size_t size, bool value)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Write a boolean value.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -86,11 +113,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
 @param value The value to write.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_number(ajson_writer *writer, void *buffer, size_t size, double value)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Write a number.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -100,11 +128,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
 @param value The value to write.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_integer(ajson_writer *writer, void *buffer, size_t size, int64_t value)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Write an integer.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -114,11 +143,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
 @param value The value to write.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_string(ajson_writer *writer, void *buffer, size_t size, const char* value, size_t length, enum ajson_encoding encoding)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Write a string.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -130,11 +160,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param value The string to write.
 @param length The length of the passed string.
 @param encoding The enclding of the passed string.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_string_latin1(ajson_writer *writer, void *buffer, size_t size, const char* value)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Write a string.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -144,11 +175,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
 @param value A null terminated Latin-1 string.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_string_utf8(ajson_writer *writer, void *buffer, size_t size, const char* value)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Write a string.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -158,11 +190,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
 @param value A null terminated UTF-8 string.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_begin_array(ajson_writer *writer, void *buffer, size_t size)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Begin writing an array.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -171,11 +204,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param writer Pointer to writer object.
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_end_array(ajson_writer *writer, void *buffer, size_t size)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief End writing an array.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -184,11 +218,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param writer Pointer to writer object.
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_begin_object(ajson_writer *writer, void *buffer, size_t size)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Begin writing an object.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -197,11 +232,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param writer Pointer to writer object.
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_end_object(ajson_writer *writer, void *buffer, size_t size)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief End writing an object.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -210,11 +246,12 @@ If the buffer was not big enough the returned size will be the buffer size. In t
 @param writer Pointer to writer object.
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn ssize_t ajson_write_continue(ajson_writer *writer, void *buffer, size_t size)
 @ingroup writer_write
+@memberof ajson_writer_s
 @brief Write data to buffer that didn't fit into the last buffer.
 
 If the buffer was not big enough the returned size will be the buffer size. In this case
@@ -224,19 +261,21 @@ rest.
 @param writer Pointer to writer object.
 @param buffer Buffer to which shall be written.
 @param size Size of the buffer.
-@return Returns the number of written bytes or -1 on error.
+@return The number of written bytes or -1 on error.
 */
 
 /** @fn int ajson_writer_get_flags(ajson_writer *writer)
 @ingroup writer_getters
+@memberof ajson_writer_s
 @brief Get the writer flags.
 @param writer Pointer to writer object.
-@return Returns the writer flags.
+@return The writer flags.
 */
 
 /** @fn const char *ajson_writer_get_indent(ajson_writer *writer)
 @ingroup writer_getters
+@memberof ajson_writer_s
 @brief Get the indentation string.
 @param writer Pointer to writer object.
-@return Returns the indentation string.
+@return The indentation string.
 */

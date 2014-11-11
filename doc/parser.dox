@@ -4,33 +4,42 @@
 
 /** @defgroup parser_getters Parser Getters
 @ingroup parser
+
+The main use for this functions is for bindings (e.g. the Python bindings) where accessing
+the fields of the struct would be cumbersome. Using the getters and ::ajson_alloc/::ajson_free
+also means that your program will be compatible to any furhter changes of ::ajson_parser_s.
+But such changes will be unlikely and would require a bump of the major version.
+
 */
 
 /** @def AJSON_FLAG_INTEGER
 @ingroup parser
 @brief Parse numbers without decimals or exponent as integers.
-@see ajson_init
 
 -0 is not parsed as integer because -0 and 0 are two distinct floating point values.
 The parsed integer will be stored in @c ajson_parser::value.integer .
+
+@see ajson_init
 */
 
 /** @def AJSON_FLAG_NUMBER_COMPONENTS
 @ingroup parser
 @brief Return number components instead of combining them to floating point values.
-@see ajson_init
 
 The parsed components will be stored in @c ajson_parser::value.components .
+
+@see ajson_init
 */
 
 /** @def AJSON_FLAG_NUMBER_AS_STRING
 @ingroup parser
 @brief Parse numbers as strings.
-@see ajson_init
 
 The parsed integer will be stored in @c ajson_parser::value.string.value . The string
 will be terminated with a null byte but in addition @c ajson_parser::value.string.length
 will be set to the length of the string excluding the null byte.
+
+@see ajson_init
 */
 
 /** @def AJSON_FLAGS_NONE
@@ -225,6 +234,7 @@ parser can be used again ::ajson_reset needs to be called.
 
 /** @fn int ajson_init(ajson_parser *parser, int flags, enum ajson_encoding encoding)
 @ingroup parser
+@memberof ajson_parser_s
 @brief Initialize a parser object.
 
 ### Errors
@@ -236,7 +246,8 @@ parser can be used again ::ajson_reset needs to be called.
 @param parser Pointer to parser object.
 @param flags Parser flags.
 @param encoding Input encoding.
-@return Returns 0 on success, -1 otherwise and sets @c errno .
+@return 0 on success, -1 otherwise and sets @c errno .
+
 @see AJSON_FLAG_NUMBER_AS_STRING
 @see AJSON_FLAG_INTEGER
 @see AJSON_FLAG_NUMBER_COMPONENTS
@@ -245,6 +256,7 @@ parser can be used again ::ajson_reset needs to be called.
 
 /** @fn void ajson_reset(ajson_parser *parser)
 @ingroup parser
+@memberof ajson_parser_s
 @brief Reset the parser.
 
 This must be called to be able to reuse a parser object even if parsing was finished and
@@ -255,12 +267,14 @@ This must be called to be able to reuse a parser object even if parsing was fini
 
 /** @fn void ajson_destroy(ajson_parser *parser)
 @ingroup parser
+@memberof ajson_parser_s
 @brief Free allocated data structures.
 @param parser Pointer to parser object.
 */
 
 /** @fn int ajson_feed(ajson_parser *parser, const void *buffer, size_t size)
 @ingroup parser
+@memberof ajson_parser_s
 @brief Feed data to parser.
 
 Feed a buffer of size 0 to signal the end of the file.
@@ -278,6 +292,7 @@ Feed a buffer of size 0 to signal the end of the file.
 
 /** @fn enum ajson_token ajson_next_token(ajson_parser *parser)
 @ingroup parser
+@memberof ajson_parser_s
 @brief Parse next token.
 @param parser Pointer to parser object.
 @return Parsed token.
@@ -285,7 +300,8 @@ Feed a buffer of size 0 to signal the end of the file.
 
 /** @fn ajson_parser *ajson_alloc(int flags, enum ajson_encoding encoding)
 @ingroup parser
-@brief Allicate parser object on heap and initialize it.
+@relates ajson_parser_s
+@brief Allicate parser object and initialize it.
 @see ajson_init
 
 The main use for this function is for bindings (e.g. the Python bindings) where managing the memory for
@@ -302,31 +318,38 @@ the parser struct would be cumbersome.
 
 /** @fn void ajson_free(ajson_parser *parser)
 @ingroup parser
+@memberof ajson_parser_s
 @brief Destroy and free parser object.
-@see ajson_destroy
-@param parser Pointer to parser object.
+
+Release a parser object previously allocated using ::ajson_alloc.
+
+@param parser Pointer to parser object
+@see ajson_destroy.
 */
 
 /** @fn int ajson_get_flags(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the parser flags.
 @param parser Pointer to parser object.
-@return Returns the parser flags.
+@return The parser flags.
 */
 
 /** @fn bool ajson_get_boolean(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the parsed boolean value.
 
 This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_BOOLEAN.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the parsed boolean value.
+@return The parsed boolean value.
 */
 
 /** @fn double ajson_get_number(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the parsed number.
 
 This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_NUMBER and
@@ -334,22 +357,24 @@ neither ::AJSON_FLAG_NUMBER_AS_STRING or ::AJSON_FLAG_NUMBER_COMPONENTS where us
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the parsed number.
+@return The parsed number.
 */
 
 /** @fn int64_t ajson_get_integer(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the parsed integer.
 
 This will only return valid data if the last call to ::ajson_next_token returned ::AJSON_TOK_INTEGER.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the parsed integer.
+@return The parsed integer.
 */
 
 /** @fn const char* ajson_get_string(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the parsed string.
 
 This will only return a valid pointer if the last call to ::ajson_next_token returned
@@ -357,11 +382,12 @@ This will only return a valid pointer if the last call to ::ajson_next_token ret
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the parsed string.
+@return The parsed string.
 */
 
 /** @fn size_t ajson_get_string_length(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the size of the parsed string.
 
 This will only return a valid pointer if the last call to ::ajson_next_token returned
@@ -369,122 +395,141 @@ This will only return a valid pointer if the last call to ::ajson_next_token ret
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the size of the parsed string.
+@return The size of the parsed string.
 */
 
 /** @fn bool ajson_get_components_positive(const ajson_parser *parser)
 @ingroup parser_getters
-@brief TODO
+@memberof ajson_parser_s
+@brief Get sign of parsed number.
 
 This will only return a valid value if the last call to ::ajson_next_token returned
 ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
+@return @c true if a positive number or 0 was parsed, @c false otherwise.
 */
 
 /** @fn bool ajson_get_components_exponent_positive(const ajson_parser *parser)
 @ingroup parser_getters
-@brief TODO
+@memberof ajson_parser_s
+@brief Get sign of parsed exponent.
 
 This will only return a valid value if the last call to ::ajson_next_token returned
 ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
+@return @c true if the exponent was positive or 0, @c false otherwise.
 */
 
 /** @fn uint64_t ajson_get_components_integer(const ajson_parser *parser)
 @ingroup parser_getters
-@brief TODO
+@memberof ajson_parser_s
+@brief Get the integer component of the parsed number.
 
 This will only return a valid value if the last call to ::ajson_next_token returned
 ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
+@return The integer component of the parsed number.
 */
 
 /** @fn uint64_t ajson_get_components_decimal(const ajson_parser *parser)
 @ingroup parser_getters
-@brief TODO
+@memberof ajson_parser_s
+@brief Get the decimal component of the parsed number.
 
 This will only return a valid value if the last call to ::ajson_next_token returned
 ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
+@return The decimal component of the parsed number.
 */
 
 /** @fn uint64_t ajson_get_components_decimal_places(const ajson_parser *parser)
 @ingroup parser_getters
-@brief TODO
+@memberof ajson_parser_s
+@brief Get the number of places of the decimal component of the parsed number.
+
+If more decimal places where given than fit in an unsinged 64 bit integer the last place
+will be rounded and any further places will be ignored.
 
 This will only return a valid value if the last call to ::ajson_next_token returned
 ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
+@return The number of places of the decimal component.
 */
 
 /** @fn uint64_t ajson_get_components_exponent(const ajson_parser *parser)
 @ingroup parser_getters
-@brief TODO
+@memberof ajson_parser_s
+@brief Get the exponent of the parsed number.
 
 This will only return a valid value if the last call to ::ajson_next_token returned
 ::AJSON_TOK_NUMBER and ::AJSON_FLAG_NUMBER_COMPONENTS was used.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
+@return The exponent of the parsed number.
 */
 
 /** @fn enum ajson_error ajson_get_error(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the current error code.
 
 This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the current error code.
+@return The current error code.
 */
 
 /** @fn const char* ajson_get_error_filename(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the C source file where the error occured (currently always parser.c).
 
 This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the C source file where the error occured.
+@return The C source file where the error occured.
 */
 
 /** @fn const char* ajson_get_error_function(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the C function where the error occured.
 
 This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the C function where the error occured.
+@return The C function where the error occured.
 */
 
 /** @fn size_t ajson_get_error_lineno(const ajson_parser *parser)
 @ingroup parser_getters
+@memberof ajson_parser_s
 @brief Get the line in the C source file where the error occured.
 
 This will only return a valid value if the last call to ::ajson_next_token returned ::AJSON_TOK_ERROR.
 This function is primarly available to make writing bindings for languages like Python easier.
 
 @param parser Pointer to parser object.
-@return Returns the line in the C source file where the error occured.
+@return The line in the C source file where the error occured.
 */
 
 /** @fn const char* ajson_error_str(enum ajson_error error)
 @ingroup parser
 @brief Get the error message to a given error code.
 @param error The error code.
-@return Returns the error message.
+@return The error message.
 */

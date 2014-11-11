@@ -9,6 +9,8 @@
 @brief Callback parser structure.
 
 #ctx will be passed to all callback functions. Callback function pointers may be @c NULL .
+
+@see ajson_parser_s
 */
 
 /** @typedef ajson_null_func
@@ -18,66 +20,67 @@
 
 /** @typedef ajson_boolean_func
 @ingroup callback_parser
-@brief TODO
-*/
-
-/** @typedef ajson_number_func
-@ingroup callback_parser
-@brief TODO
+@brief Callback type for @c null values.
 */
 
 /** @typedef ajson_number_as_string_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for numbers when parsed as string.
+*/
+
+/** @typedef ajson_number_func
+@ingroup callback_parser
+@brief Callback type for numbers.
 */
 
 /** @typedef ajson_components_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for number components.
 */
 
 /** @typedef ajson_integer_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for integers.
 */
 
 /** @typedef ajson_string_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for strings.
 */
 
 /** @typedef ajson_begin_array_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for array beginnings.
 */
 
 /** @typedef ajson_end_array_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for array ends.
 */
 
 /** @typedef ajson_begin_object_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for object beginnings.
 */
 
 /** @typedef ajson_end_object_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for object ends.
 */
 
 /** @typedef ajson_end_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for the end of the JSON document.
 */
 
 /** @typedef ajson_error_func
 @ingroup callback_parser
-@brief TODO
+@brief Callback type for errors.
 */
 
 /** @fn int ajson_cb_parse_fd(ajson_cb_parser *parser, int fd)
 @ingroup callback_parser
+@memberof ajson_cb_parser_s
 @brief Parse JSON document from file descriptor.
 
 See ::ajson_feed, ::ajson_cb_dispatch and @c read() for possible error codes.
@@ -89,6 +92,7 @@ See ::ajson_feed, ::ajson_cb_dispatch and @c read() for possible error codes.
 
 /** @fn int ajson_cb_parse_file(ajson_cb_parser *parser, FILE* stream)
 @ingroup callback_parser
+@memberof ajson_cb_parser_s
 @brief Parse JSON document from @c FILE pointer.
 
 See ::ajson_feed, ::ajson_cb_dispatch and @c fread() for possible error codes.
@@ -100,6 +104,7 @@ See ::ajson_feed, ::ajson_cb_dispatch and @c fread() for possible error codes.
 
 /** @fn int ajson_cb_parse_buf(ajson_cb_parser *parser, const void* buffer, size_t size)
 @ingroup callback_parser
+@memberof ajson_cb_parser_s
 @brief Parse JSON document from buffer.
 
 See ::ajson_feed and ::ajson_cb_dispatch for possible error codes.
@@ -112,7 +117,8 @@ See ::ajson_feed and ::ajson_cb_dispatch for possible error codes.
 
 /** @fn int ajson_cb_dispatch(ajson_cb_parser *parser)
 @ingroup callback_parser
+@memberof ajson_cb_parser_s
 @brief Parse a token and dispatch callback.
 @param parser Pointer to parser object.
-@return Returns -1 if ::AJSON_TOK_ERROR was returned by ::ajson_next_token, 0 otherwise.
+@return -1 if ::AJSON_TOK_ERROR was returned by ::ajson_next_token, 0 otherwise.
 */

@@ -63,6 +63,17 @@ int ajson_writer_init(ajson_writer *writer, int flags, const char *indent) {
     return 0;
 }
 
+void ajson_writer_reset(ajson_writer *writer) {
+    writer->nesting_written = 0;
+    writer->write_func      = &_ajson_write_dummy;
+    writer->next_write_func = NULL;
+    writer->state           = 0;
+    writer->stack_current   = 0;
+    if (writer->stack && writer->stack_size > 0) {
+        writer->stack[0] = 0;
+    }
+}
+
 void ajson_writer_destroy(ajson_writer *writer) {
     free(writer->stack);
     writer->stack         = NULL;

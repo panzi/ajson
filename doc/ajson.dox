@@ -102,5 +102,5 @@ if the library version doesn't match the version of the used headers.
  - @c EINVAL Buffer size is 0 or UTF-8 encoded codepoint is truncated.
  - @c EILSEQ Illegal UTF-8 byte sequence found.
 
-@return Returns the number of bytes of buffer used on success. On error @c -error_index @c - @c 1 is returned.
+@return On success the number of bytes of buffer used, on error @c -error_index @c - @c 1 .
 */
