@@ -19,7 +19,7 @@ int main() { char buf[64]; return snprintf(buf, sizeof(buf), \"test\"); }" HAVE_
 option(AJSON_USE_GNUC_ADDRESS_FROM_LABEL
 	"Use GNUC extension to use label addresses for improved performance"
 	${HAVE_ADDRESS_FROM_LABEL})
-option(BUILD_SHARED_LIBS "Build as shared library" ON)
+option(BUILD_SHARED_LIBS "Build as shared library" OFF)
 option(BUILD_EXAMPLES "Build examples" OFF)
 option(BUILD_PERF "Build performance tests" ON)
 option(BUILD_TESTS "Build tests" OFF)
