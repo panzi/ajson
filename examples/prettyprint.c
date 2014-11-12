@@ -12,7 +12,8 @@ enum ajson_read {
 int main(int argc, char *argv[]) {
     struct option long_options[] = {
         {"help",     no_argument,       0, 'h'},
-        {"integers", no_argument,       0, 'i'},
+        {"integer",  no_argument,       0, 'i'},
+        {"string",   no_argument,       0, 's'},
         {"encoding", required_argument, 0, 'e'},
         {"ascii",    no_argument,       0, 'a'},
         {"indent",   required_argument, 0, 'I'},
@@ -31,7 +32,7 @@ int main(int argc, char *argv[]) {
     ajson_writer writer;
 
     for (;;) {
-        int opt = getopt_long(argc, argv, "hie:aI:n", long_options, NULL);
+        int opt = getopt_long(argc, argv, "hise:aI:n", long_options, NULL);
 
         if (opt == -1)
             break;
@@ -44,6 +45,7 @@ int main(int argc, char *argv[]) {
                         "OPTIONS:\n"
                         "\t-h, --help                 print this help message\n"
                         "\t-i, --integer              parse numbers without decimals or exponent as 64bit integers\n"
+                        "\t-s, --string               parse numbers as strings (conflicts with --integer)\n"
                         "\t-e, --encoding=ENCODING    input encoding 'UTF-8' (default) or 'LATIN-1'\n"
                         "\t-a, --ascii                produce ASCII compatible output\n"
                         "\t-I, --indent=INDENT        use INDENT as indentation (default: $'\\t')\n"
@@ -54,6 +56,10 @@ int main(int argc, char *argv[]) {
 
         case 'i':
             parser_flags |= AJSON_FLAG_INTEGER;
+            break;
+
+        case 's':
+            parser_flags |= AJSON_FLAG_NUMBER_AS_STRING;
             break;
 
         case 'e':
@@ -155,7 +161,18 @@ int main(int argc, char *argv[]) {
                 break;
 
             case AJSON_TOK_NUMBER:
-                written = ajson_write_number(&writer, outbuf, sizeof(outbuf), parser.value.number);
+                if (parser_flags & AJSON_FLAG_NUMBER_AS_STRING) {
+                    if (fwrite(parser.value.string.value, 1, parser.value.string.length, stdout) < parser.value.string.length) {
+                        perror("fwrite");
+                        if (optind < argc) fclose(fp);
+                        ajson_writer_destroy(&writer);
+                        ajson_destroy(&parser);
+                        return 1;
+                    }
+                }
+                else {
+                    written = ajson_write_number(&writer, outbuf, sizeof(outbuf), parser.value.number);
+                }
                 break;
 
             case AJSON_TOK_INTEGER:
