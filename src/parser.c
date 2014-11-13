@@ -688,7 +688,7 @@ enum ajson_token ajson_next_token(ajson_parser *parser) {
                         int digit = CURR_CH() - '0';
                         if (((UINT64_MAX - 9)     / 10 < parser->value.components.decimal && // try to avoid runtime division
                              (UINT64_MAX - digit) / 10 < parser->value.components.decimal) ||
-                            parser->value.components.decimal_places == INT64_MAX) {
+                            parser->value.components.decimal_places == UINT64_MAX) {
                             // round next digit
                             if (digit >= 5 && parser->value.components.decimal < UINT64_MAX) {
                                 parser->value.components.decimal += 1;
