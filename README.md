@@ -4,7 +4,7 @@ ajson
 Asynchronous JSON library written in C.
 
 This library allows you to parse JSON files chunk by chunk, processing only the
-data is available. It does this using a technique similar to
+data that is available. It does this using a technique similar to
 [Protothreads](http://dunkels.com/adam/pt/). This means it records the parse state
 in the parser struct and continues the parser function from the point it left it
 at the last data chunk. If available it used gcc's
