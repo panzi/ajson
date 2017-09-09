@@ -175,7 +175,7 @@ but it was very easy to support, so I did it. The writer writes UTF-8 or ASCII f
 The parser allows strings to contain control characters like null bytes and line
 breaks. Thechnically this is invalid JSON but this library allows it anyway. Note
 that this might change in the future. The writer will never produce JSON containing
-control characters. They will be encoded as e.g. `\u0000` or '\n`.
+control characters. They will be encoded as e.g. `\u0000` or `\n`.
 
 See Also
 --------
